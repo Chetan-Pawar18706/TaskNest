@@ -9,6 +9,24 @@ All-in-one Personal Life Management System built with PHP 8+, MySQL, vanilla Jav
 
 ---
 
+## Table of Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
+- [Tech Stack](#tech-stack)
+- [Database Schema](#database-schema)
+- [Security Features](#security-features)
+- [Configuration](#configuration)
+- [Browser Support](#browser-support)
+- [Contributing](#contributing)
+- [License](#license)
+- [Author](#author)
+
+---
+
 ## Features
 
 | Module | Description |
@@ -46,130 +64,126 @@ All-in-one Personal Life Management System built with PHP 8+, MySQL, vanilla Jav
 
 ### 1. Clone the Repository
 
-`ash
+```bash
 git clone https://github.com/YOUR_USERNAME/TaskNest.git
-`
+```
 
-Place the TaskNest folder in your web server's document root (e.g., C:\xampp\htdocs\).
+Place the `TaskNest` folder in your web server's document root (e.g., `C:\xampp\htdocs\`).
 
 ### 2. Create Database
 
-Open phpMyAdmin (http://localhost/phpmyadmin) and import the schema:
+Open phpMyAdmin (`http://localhost/phpmyadmin`) and import the schema:
 
 **Option A: Import via phpMyAdmin**
 
 1. Open phpMyAdmin
 2. Click Import tab
-3. Choose database/tasknest.sql
+3. Choose `database/tasknest.sql`
 4. Click Go
 
 **Option B: Import via command line**
 
-`ash
+```bash
 mysql -u root -p < database/tasknest.sql
-`
+```
 
 ### 3. Configure Database
 
-Edit config/db.php with your database credentials:
+Edit `config/db.php` with your database credentials:
 
-`php
+```php
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'tasknest');
-`
+```
 
 ### 4. Set Up Admin User
 
 Run this SQL query in phpMyAdmin to create an admin user:
 
-`sql
+```sql
+-- First generate a password hash in PHP:
+-- <?php echo password_hash('Admin@1234', PASSWORD_ARGON2ID); ?>
+
 INSERT INTO users (username, email, password_hash, first_name, last_name, role)
 VALUES (
     'admin',
     'admin@tasknest.com',
-    '',
+    'YOUR_HASHED_PASSWORD_HERE',
     'Admin',
     'User',
     'admin'
 );
-`
-
-Or use the PHP console to generate a hash:
-
-`php
-<?php echo password_hash('Admin@1234', PASSWORD_ARGON2ID); ?>
-`
+```
 
 ### 5. Access the Application
 
-Navigate to http://localhost/TaskNest/ in your browser.
+Navigate to `http://localhost/TaskNest/` in your browser.
 
 ---
 
 ## Project Structure
 
-`
+```
 TaskNest/
+|-- config/
+|   |-- db.php                    # Database connection & configuration
 |
-+-- config/
-|   +-- db.php                  # Database connection & configuration
+|-- database/
+|   |-- tasknest.sql              # MySQL database schema
 |
-+-- database/
-|   +-- tasknest.sql            # MySQL database schema
+|-- includes/
+|   |-- auth.php                  # Authentication class
+|   |-- functions.php             # 50+ utility functions
+|   |-- header.php                # HTML head & layout
+|   |-- footer.php                # Scripts & layout close
+|   |-- navbar.php                # Top navigation
+|   |-- sidebar.php               # Side navigation
+|   |-- mail.php                  # Email helper
 |
-+-- includes/
-|   +-- auth.php                # Authentication class
-|   +-- functions.php           # 50+ utility functions
-|   +-- header.php              # HTML head & layout
-|   +-- footer.php              # Scripts & layout close
-|   +-- navbar.php              # Top navigation
-|   +-- sidebar.php             # Side navigation
-|   +-- mail.php                # Email helper
+|-- modules/
+|   |-- tasks/                    # Tasks CRUD
+|   |-- notes/                    # Smart Notes
+|   |-- expenses/                 # Expense Manager
+|   |-- documents/                # Document Vault
+|   |-- borrow/                   # Borrow & Lend
+|   |-- habits/                   # Habit Tracker
+|   |-- goals/                    # Goal Tracker
+|   |-- shopping/                 # Shopping List
+|   |-- admin/                    # Admin Panel
 |
-+-- modules/
-|   +-- tasks/                  # Tasks CRUD
-|   +-- notes/                  # Smart Notes
-|   +-- expenses/               # Expense Manager
-|   +-- documents/              # Document Vault
-|   +-- borrow/                 # Borrow & Lend
-|   +-- habits/                 # Habit Tracker
-|   +-- goals/                  # Goal Tracker
-|   +-- shopping/               # Shopping List
-|   +-- admin/                  # Admin Panel
+|-- assets/
+|   |-- css/                      # 17 Stylesheets
+|   |-- js/                       # 14 JavaScript files
+|   |-- images/                   # Logo & static images
 |
-+-- assets/
-|   +-- css/                    # 17 Stylesheets
-|   +-- js/                     # 14 JavaScript files
-|   +-- images/                 # Logo & static images
+|-- uploads/                      # User uploads (avatars)
+|-- logs/                         # Application logs
 |
-+-- uploads/                    # User uploads (avatars)
-+-- logs/                       # Application logs
+|-- index.php                     # Landing page
+|-- login.php                     # Login
+|-- register.php                  # Registration
+|-- forgot-password.php           # Password reset request
+|-- reset-password.php            # Password reset
+|-- logout.php                    # Logout handler
+|-- dashboard.php                 # Main dashboard
+|-- profile.php                   # User profile
+|-- settings.php                  # User settings
+|-- tasks.php                     # Tasks entry point
+|-- notes.php                     # Notes entry point
+|-- expenses.php                  # Expenses entry point
+|-- documents.php                 # Documents entry point
+|-- habits.php                    # Habits entry point
+|-- goals.php                     # Goals entry point
+|-- shopping.php                  # Shopping entry point
+|-- borrow.php                    # Borrow entry point
+|-- admin.php                     # Admin entry point
 |
-+-- index.php                   # Landing page
-+-- login.php                   # Login
-+-- register.php                # Registration
-+-- forgot-password.php         # Password reset request
-+-- reset-password.php          # Password reset
-+-- logout.php                  # Logout handler
-+-- dashboard.php               # Main dashboard
-+-- profile.php                 # User profile
-+-- settings.php                # User settings
-+-- tasks.php                   # Tasks entry point
-+-- notes.php                   # Notes entry point
-+-- expenses.php                # Expenses entry point
-+-- documents.php               # Documents entry point
-+-- habits.php                  # Habits entry point
-+-- goals.php                   # Goals entry point
-+-- shopping.php                # Shopping entry point
-+-- borrow.php                  # Borrow entry point
-+-- admin.php                   # Admin entry point
-|
-+-- .htaccess                   # Apache security rules
-+-- .gitignore                  # Git ignore rules
-+-- README.md                   # This file
-`
+|-- .htaccess                     # Apache security rules
+|-- .gitignore                    # Git ignore rules
+|-- README.md                     # This file
+```
 
 ---
 
@@ -220,9 +234,10 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 ## Security Features
 
 ### Application Level
+
 - Prepared statements for all SQL queries
 - CSRF token verification on all POST requests
-- XSS protection via htmlspecialchars() with ENT_QUOTES
+- XSS protection via `htmlspecialchars()` with `ENT_QUOTES`
 - Argon2id password hashing (65536 memory cost, 4 time cost, 3 threads)
 - Session security (HttpOnly, Secure, SameSite, 30-min timeout)
 - File upload validation (type, size, MIME)
@@ -230,6 +245,7 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 - Soft deletes (no data actually removed)
 
 ### Server Level (.htaccess)
+
 - Directory browsing disabled
 - Protected directories: config/, database/, logs/
 - PHP execution blocked in uploads/
@@ -268,9 +284,9 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (git checkout -b feature/amazing-feature)
-3. Commit your changes (git commit -m 'Add some amazing feature')
-4. Push to the branch (git push origin feature/amazing-feature)
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ---
@@ -285,5 +301,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Your Name** - your.email@example.com
 
-Project Link: [https://github.com/YOUR_USERNAME/TaskNest](https://github.com/YOUR_USERNAME/TaskNest)#   T a s k N e s t  
- 
+Project Link: [https://github.com/YOUR_USERNAME/TaskNest](https://github.com/YOUR_USERNAME/TaskNest)
