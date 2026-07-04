@@ -281,8 +281,8 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 
 ## Author
 
-**Your Name** - Chetan Pawar
+**Name** - Chetan Pawar
 
 **Email** -  chetanpawar8125@email.com
 
-Project Link: [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)
+**Project Link**: [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)
