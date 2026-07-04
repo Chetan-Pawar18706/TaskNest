@@ -100,22 +100,9 @@ define('DB_NAME', 'tasknest');
 
 ### 4. Set Up Admin User
 
-Run this SQL query in phpMyAdmin to create an admin user:
+Create an admin account through the application or your database tool, then assign the `admin` role to that user.
 
-```sql
--- First generate a password hash in PHP:
--- <?php echo password_hash('Admin@1234', PASSWORD_ARGON2ID); ?>
-
-INSERT INTO users (username, email, password_hash, first_name, last_name, role)
-VALUES (
-    'admin',
-    'admin@tasknest.com',
-    'YOUR_HASHED_PASSWORD_HERE',
-    'Admin',
-    'User',
-    'admin'
-);
-```
+If you need to create a password hash for the database, generate it locally with PHP and keep it private.
 
 ### 5. Access the Application
 
@@ -291,14 +278,9 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 
 ---
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
 
 ## Author
 
-**Your Name** - your.email@example.com
-
-Project Link: [https://github.com/YOUR_USERNAME/TaskNest](https://github.com/YOUR_USERNAME/TaskNest)
+**Your Name** - Chetan Pawar
+**Email** -  chetanpawar8125@email.com
+Project Link: [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)
