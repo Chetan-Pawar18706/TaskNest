@@ -34,7 +34,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="borrow-subtitle">Track items and money you've borrowed or lent to others.</p>
         </div>
         <div class="borrow-toolbar-actions">
-            <button class="btn btn-primary" type="button" id="openBorrowModal">Add Record</button>
+            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/borrow-add.php">Add Record</a>
         </div>
     </div>
 
@@ -138,11 +138,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="borrow-overdue-warning">&#x26A0; Overdue - return date was <?php echo htmlspecialchars($item['return_date']); ?></div>
                     <?php endif; ?>
                     <div class="borrow-card-actions">
-                        <button class="btn btn-secondary btn-sm" type="button" data-action="edit" data-id="<?php echo (int) $item['id']; ?>">Edit</button>
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/borrow-edit.php?id=<?php echo (int) $item['id']; ?>'">Edit</button>
                         <?php if ($item['status'] !== 'returned'): ?>
-                            <button class="btn btn-secondary btn-sm" type="button" data-action="mark_returned" data-id="<?php echo (int) $item['id']; ?>">Mark Returned</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="markReturned(<?php echo (int) $item['id']; ?>)">Mark Returned</button>
                         <?php endif; ?>
-                        <button class="btn btn-danger btn-sm" type="button" data-action="delete" data-id="<?php echo (int) $item['id']; ?>">Delete</button>
+                        <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Record', 'Are you sure?', function(){ deleteBorrowItem(<?php echo (int) $item['id']; ?>); })">Delete</button>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -151,7 +151,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F4B5;</div>
                 <h3>No records yet</h3>
                 <p>Start tracking borrowed or lent items.</p>
-                <button class="btn btn-primary" type="button" id="emptyStateAddBorrow">Add Record</button>
+                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/borrow-add.php">Add Record</a>
             </div>
         <?php endif; ?>
     </div>
@@ -165,85 +165,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php endif; ?>
 </div>
 
-<!-- Borrow Modal -->
-<div class="modal" id="borrowModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="borrowModal"></div>
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3 id="borrowModalTitle">Add Record</h3>
-            <button class="modal-close" type="button" data-close-modal="borrowModal">&times;</button>
-        </div>
-        <form id="borrowForm" class="modal-body">
-            <input type="hidden" name="borrow_id" id="borrowId">
-            <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-            <div class="form-group">
-                <label for="borrowType">Type</label>
-                <select id="borrowType" name="type" class="form-control">
-                    <option value="borrowed">I Borrowed</option>
-                    <option value="lent">I Lent</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="borrowItemType">Item Type</label>
-                <select id="borrowItemType" name="item_type" class="form-control">
-                    <option value="item">Physical Item</option>
-                    <option value="money">Money</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="borrowTitle">Title / Item Name</label>
-                <input type="text" id="borrowTitle" name="title" class="form-control" required>
-            </div>
-            <div class="form-group" id="borrowAmountGroup">
-                <label for="borrowAmount">Amount ($)</label>
-                <input type="number" id="borrowAmount" name="amount" class="form-control" step="0.01" min="0">
-            </div>
-            <div class="form-group">
-                <label for="borrowPerson">Person Name</label>
-                <input type="text" id="borrowPerson" name="person_name" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="borrowContact">Contact (optional)</label>
-                <input type="text" id="borrowContact" name="person_contact" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="borrowDescription">Description</label>
-                <textarea id="borrowDescription" name="description" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="borrowDate">Borrow Date</label>
-                    <input type="date" id="borrowDate" name="borrow_date" class="form-control" value="<?php echo date('Y-m-d'); ?>">
-                </div>
-                <div class="form-group">
-                    <label for="borrowReturnDate">Return Date</label>
-                    <input type="date" id="borrowReturnDate" name="return_date" class="form-control">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="borrowModal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Record</button>
-            </div>
-        </form>
-    </div>
-</div>
 
-<!-- Confirm Modal -->
-<div class="modal" id="borrowConfirmModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="borrowConfirmModal"></div>
-    <div class="modal-dialog modal-sm">
-        <div class="modal-header">
-            <h3 id="borrowConfirmTitle">Confirm</h3>
-            <button class="modal-close" type="button" data-close-modal="borrowConfirmModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p id="borrowConfirmBody">Are you sure?</p>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="borrowConfirmModal">Cancel</button>
-                <button class="btn btn-danger" type="button" id="borrowConfirmActionBtn">Confirm</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

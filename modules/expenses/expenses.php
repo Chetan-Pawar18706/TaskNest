@@ -59,9 +59,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'export_csv') {
-    requireLogin($auth);
-    exportExpensesCsvHandler($mysqli, $auth->getUserId(), $_GET);
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
+    $user_id = $auth->getUserId();
+    if ($_GET['action'] === 'export_csv') {
+        exportExpensesCsvHandler($mysqli, $user_id, $_GET);
+    }
+    if ($_GET['action'] === 'chart_data') {
+        header('Content-Type: application/json');
+        $months = (int) ($_GET['months'] ?? 6);
+        echo json_encode(getIncomeExpenseChartData($mysqli, $user_id, $months));
+        exit;
+    }
 }
 
 http_response_code(404);

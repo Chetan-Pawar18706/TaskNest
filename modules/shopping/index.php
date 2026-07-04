@@ -26,6 +26,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="shopping-subtitle">Plan purchases and track spending.</p>
         </div>
         <div class="shopping-toolbar-actions">
+            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/shopping-categories.php">Manage Categories</a>
             <button class="btn btn-secondary" type="button" id="clearCompletedBtn">Clear Completed</button>
         </div>
     </div>
@@ -38,14 +39,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="summary-card"><span class="summary-label">Actual Spent</span><strong>$<?php echo number_format($shopStats['actual_total'], 2); ?></strong></div>
     </div>
 
-    <form id="shoppingAddForm" class="shopping-add-form">
-        <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-        <input type="text" id="shoppingItemName" name="name" class="form-control" placeholder="Item name..." required>
-        <input type="number" id="shoppingItemQty" name="quantity" class="form-control" placeholder="Qty" value="1" min="1" style="max-width:80px;">
-        <input type="number" id="shoppingItemPrice" name="estimated_price" class="form-control" placeholder="Price ($)" step="0.01" min="0" style="max-width:120px;">
-        <input type="text" id="shoppingItemCategory" name="category" class="form-control" placeholder="Category" style="max-width:140px;">
-        <button class="btn btn-primary" type="submit">Add</button>
-    </form>
+    <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/shopping-add.php" style="margin-bottom:1rem;display:inline-block;">Add Item</a>
 
     <div class="shopping-controls">
         <form class="shopping-filters" method="get">
@@ -81,8 +75,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <?php endif; ?>
                     </div>
                     <div class="shopping-item-actions">
-                        <button class="btn btn-secondary btn-sm" type="button" data-action="edit" data-id="<?php echo (int) $item['id']; ?>">Edit</button>
-                        <button class="btn btn-danger btn-sm" type="button" data-action="delete" data-id="<?php echo (int) $item['id']; ?>">Delete</button>
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href = siteUrl + '/shopping-edit.php?id=<?php echo (int) $item['id']; ?>'">Edit</button>
+                        <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Item', 'Are you sure you want to delete this item?', function() { deleteShoppingItem(<?php echo (int) $item['id']; ?>); })">Delete</button>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -103,63 +97,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php endif; ?>
 </div>
 
-<!-- Edit Item Modal -->
-<div class="modal" id="editItemModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="editItemModal"></div>
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3>Edit Item</h3>
-            <button class="modal-close" type="button" data-close-modal="editItemModal">&times;</button>
-        </div>
-        <form id="editItemForm" class="modal-body">
-            <input type="hidden" name="item_id" id="editItemId">
-            <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-            <div class="form-group">
-                <label for="editItemName">Name</label>
-                <input type="text" id="editItemName" name="name" class="form-control" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="editItemQty">Quantity</label>
-                    <input type="number" id="editItemQty" name="quantity" class="form-control" value="1" min="1">
-                </div>
-                <div class="form-group">
-                    <label for="editItemPrice">Estimated Price ($)</label>
-                    <input type="number" id="editItemPrice" name="estimated_price" class="form-control" step="0.01" min="0">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="editItemCategory">Category</label>
-                <input type="text" id="editItemCategory" name="category" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="editItemNotes">Notes</label>
-                <textarea id="editItemNotes" name="notes" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="editItemModal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Changes</button>
-            </div>
-        </form>
-    </div>
-</div>
 
-<!-- Confirm Delete Modal -->
-<div class="modal" id="shopConfirmModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="shopConfirmModal"></div>
-    <div class="modal-dialog modal-sm">
-        <div class="modal-header">
-            <h3>Confirm Delete</h3>
-            <button class="modal-close" type="button" data-close-modal="shopConfirmModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Are you sure you want to delete this item?</p>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="shopConfirmModal">Cancel</button>
-                <button class="btn btn-danger" type="button" id="shopConfirmDeleteBtn">Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

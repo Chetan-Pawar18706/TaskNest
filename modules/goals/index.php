@@ -26,7 +26,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="goals-subtitle">Set targets and track your progress.</p>
         </div>
         <div class="goals-toolbar-actions">
-            <button class="btn btn-primary" type="button" id="openGoalModal">Add Goal</button>
+            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/goal-categories.php">Manage Categories</a>
+            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/goals-add.php">Add Goal</a>
         </div>
     </div>
 
@@ -76,10 +77,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                     <div class="goal-actions">
                         <?php if ($goal['status'] === 'active'): ?>
-                            <button class="btn btn-secondary btn-sm" type="button" data-action="progress" data-id="<?php echo (int) $goal['id']; ?>" data-current="<?php echo htmlspecialchars($goal['current_value']); ?>">Update Progress</button>
-                            <button class="btn btn-secondary btn-sm" type="button" data-action="edit" data-id="<?php echo (int) $goal['id']; ?>">Edit</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="updateGoalProgress(<?php echo (int) $goal['id']; ?>)">Update Progress</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/goals-edit.php?id=<?php echo (int) $goal['id']; ?>'">Edit</button>
                         <?php endif; ?>
-                        <button class="btn btn-danger btn-sm" type="button" data-action="delete" data-id="<?php echo (int) $goal['id']; ?>">Delete</button>
+                        <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Goal', 'Are you sure?', function(){ deleteGoal(<?php echo (int) $goal['id']; ?>); })">Delete</button>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -88,61 +89,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F3AF;</div>
                 <h3>No goals yet</h3>
                 <p>Set your first goal and start tracking progress.</p>
-                <button class="btn btn-primary" type="button" id="emptyStateAddGoal">Add Goal</button>
+                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/goals-add.php">Add Goal</a>
             </div>
         <?php endif; ?>
     </div>
 </div>
 
-<div class="modal" id="goalModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="goalModal"></div>
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3 id="goalModalTitle">Add Goal</h3>
-            <button class="modal-close" type="button" data-close-modal="goalModal">&times;</button>
-        </div>
-        <form id="goalForm" class="modal-body">
-            <input type="hidden" name="goal_id" id="goalId">
-            <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-            <div class="form-group"><label for="goalTitle">Title</label><input type="text" id="goalTitle" name="title" class="form-control" required></div>
-            <div class="form-group"><label for="goalDescription">Description</label><textarea id="goalDescription" name="description" class="form-control" rows="2"></textarea></div>
-            <div class="form-group"><label for="goalCategory">Category</label><input type="text" id="goalCategory" name="category" class="form-control" placeholder="e.g. Fitness, Career, Learning"></div>
-            <div class="form-row">
-                <div class="form-group"><label for="goalTargetValue">Target Value</label><input type="number" id="goalTargetValue" name="target_value" class="form-control" step="0.01" min="0"></div>
-                <div class="form-group"><label for="goalCurrentValue">Current Value</label><input type="number" id="goalCurrentValue" name="current_value" class="form-control" step="0.01" min="0"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label for="goalUnit">Unit</label><input type="text" id="goalUnit" name="unit" class="form-control" placeholder="e.g. kg, hours, km"></div>
-                <div class="form-group"><label for="goalStatus">Status</label><select id="goalStatus" name="status" class="form-control"><option value="active">Active</option><option value="completed">Completed</option><option value="abandoned">Abandoned</option></select></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label for="goalStartDate">Start Date</label><input type="date" id="goalStartDate" name="start_date" class="form-control" value="<?php echo date('Y-m-d'); ?>"></div>
-                <div class="form-group"><label for="goalDueDate">Due Date</label><input type="date" id="goalDueDate" name="due_date" class="form-control"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="goalModal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Goal</button>
-            </div>
-        </form>
-    </div>
-</div>
 
-<div class="modal" id="goalProgressModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="goalProgressModal"></div>
-    <div class="modal-dialog modal-sm">
-        <div class="modal-header">
-            <h3>Update Progress</h3>
-            <button class="modal-close" type="button" data-close-modal="goalProgressModal">&times;</button>
-        </div>
-        <form id="goalProgressForm" class="modal-body">
-            <input type="hidden" name="goal_id" id="progressGoalId">
-            <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-            <div class="form-group"><label for="progressCurrentValue">Current Value</label><input type="number" id="progressCurrentValue" name="current_value" class="form-control" step="0.01" min="0"></div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="goalProgressModal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Update</button>
-            </div>
-        </form>
-    </div>
-</div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

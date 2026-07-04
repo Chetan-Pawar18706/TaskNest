@@ -15,10 +15,11 @@ $user = $auth->getUser();
 $counts = getDashboardCounts($mysqli, $user_id);
 $recent_activities = getRecentActivity($mysqli, $user_id, 10);
 $reminders = getUpcomingReminders($mysqli, $user_id, 7);
-$expenseChart = getExpenseChartData($mysqli, $user_id, 6);
+$expenseChart = getIncomeExpenseChartData($mysqli, $user_id, 6);
 $completionChart = getTaskCompletionData($mysqli, $user_id);
 $habitChart = getHabitProgressData($mysqli, $user_id);
-$calendarEvents = getCalendarEvents($mysqli, $user_id, 30);
+$calendarEvents = getCalendarEvents($mysqli, $user_id, 60);
+$allCalendarEvents = getAllCalendarEvents($mysqli, $user_id);
 
 $page_title = 'Dashboard';
 $additional_css = ['dashboard.css', 'components.css', 'theme.css'];
@@ -89,12 +90,17 @@ include 'includes/header.php';
         <div class="dashboard-panel dashboard-panel--double">
             <div class="dashboard-panel-header">
                 <div>
-                    <h2 class="dashboard-panel-title">Monthly Expense</h2>
-                    <p class="dashboard-panel-subtitle">A six-month view of your spending.</p>
+                    <h2 class="dashboard-panel-title">Income vs Expenses</h2>
+                    <p class="dashboard-panel-subtitle">Track your cash flow over time.</p>
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="btn btn-secondary btn-sm chart-range-btn" data-months="3" style="font-size:0.8rem;height:30px;">3M</button>
+                    <button class="btn btn-secondary btn-sm chart-range-btn active" data-months="6" style="font-size:0.8rem;height:30px;">6M</button>
+                    <button class="btn btn-secondary btn-sm chart-range-btn" data-months="12" style="font-size:0.8rem;height:30px;">12M</button>
                 </div>
             </div>
             <div class="chart-area">
-                <canvas id="expenseChart" data-labels='<?php echo json_encode($expenseChart['labels']); ?>' data-values='<?php echo json_encode($expenseChart['values']); ?>'></canvas>
+                <canvas id="expenseChart" data-labels="<?php echo htmlspecialchars(json_encode($expenseChart['labels'])); ?>" data-income="<?php echo htmlspecialchars(json_encode($expenseChart['income'])); ?>" data-expenses="<?php echo htmlspecialchars(json_encode($expenseChart['expenses'])); ?>"></canvas>
             </div>
         </div>
 
@@ -106,7 +112,7 @@ include 'includes/header.php';
                 </div>
             </div>
             <div class="chart-area">
-                <canvas id="completionChart" data-values='<?php echo json_encode([$completionChart['completed'], $completionChart['pending']]); ?>'></canvas>
+                <canvas id="completionChart" data-values="<?php echo htmlspecialchars(json_encode([$completionChart['completed'], $completionChart['pending']])); ?>"></canvas>
             </div>
         </div>
 
@@ -118,7 +124,7 @@ include 'includes/header.php';
                 </div>
             </div>
             <div class="chart-area">
-                <canvas id="habitChart" data-labels='<?php echo json_encode($habitChart['labels']); ?>' data-values='<?php echo json_encode($habitChart['values']); ?>'></canvas>
+                <canvas id="habitChart" data-labels="<?php echo htmlspecialchars(json_encode($habitChart['labels'])); ?>" data-values="<?php echo htmlspecialchars(json_encode($habitChart['values'])); ?>"></canvas>
             </div>
         </div>
 
@@ -128,8 +134,9 @@ include 'includes/header.php';
                     <h2 class="dashboard-panel-title">Calendar</h2>
                     <p class="dashboard-panel-subtitle">Upcoming plans and events.</p>
                 </div>
+                <a href="<?php echo SITE_URL; ?>/events-add.php" class="btn btn-secondary btn-sm" style="font-size:0.8rem;height:30px;">+ Add Event</a>
             </div>
-            <div id="dashboardCalendar" data-month-label="<?php echo date('F Y'); ?>"></div>
+            <div id="dashboardCalendar" data-month-label="<?php echo date('F Y'); ?>" data-events="<?php echo htmlspecialchars(json_encode($allCalendarEvents)); ?>"></div>
             <div class="timeline-meta" style="margin-top: 0.7rem;"><?php echo count($calendarEvents) > 0 ? count($calendarEvents) . ' scheduled event(s) this month' : 'No events yet'; ?></div>
         </div>
 

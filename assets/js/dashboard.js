@@ -3,7 +3,8 @@
 
     const state = {
         calendarMonth: new Date().getMonth(),
-        calendarYear: new Date().getFullYear()
+        calendarYear: new Date().getFullYear(),
+        chartInstance: null
     };
 
     function initDashboard() {
@@ -11,37 +12,14 @@
         renderCalendar();
         bindQuickActions();
         bindSearch();
+        bindChartRange();
     }
 
     function initCharts() {
-        const expenseCanvas = document.getElementById('expenseChart');
-        const completionCanvas = document.getElementById('completionChart');
-        const habitCanvas = document.getElementById('habitChart');
+        if (typeof Chart === 'undefined') return;
+        renderExpenseChart();
 
-        if (typeof Chart === 'undefined') {
-            return;
-        }
-
-        if (expenseCanvas) {
-            new Chart(expenseCanvas, {
-                type: 'bar',
-                data: {
-                    labels: JSON.parse(expenseCanvas.dataset.labels || '[]'),
-                    datasets: [{
-                        label: 'Expenses',
-                        data: JSON.parse(expenseCanvas.dataset.values || '[]'),
-                        backgroundColor: ['#6366f1', '#818cf8', '#8b5cf6', '#a78bfa', '#10b981', '#34d399']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                }
-            });
-        }
-
+        var completionCanvas = document.getElementById('completionChart');
         if (completionCanvas) {
             new Chart(completionCanvas, {
                 type: 'doughnut',
@@ -56,6 +34,7 @@
             });
         }
 
+        var habitCanvas = document.getElementById('habitChart');
         if (habitCanvas) {
             new Chart(habitCanvas, {
                 type: 'line',
@@ -73,83 +52,170 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
+    }
 
-        window.addEventListener('resize', () => {
-            if (typeof Chart !== 'undefined') {
-                Object.values(Chart.instances).forEach(function(instance) {
-                    instance.resize();
+    function renderExpenseChart(months) {
+        var canvas = document.getElementById('expenseChart');
+        if (!canvas) return;
+
+        if (months) {
+            fetch(siteUrl + '/modules/expenses/expenses.php?action=chart_data&months=' + months)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        canvas.dataset.labels = JSON.stringify(data.labels);
+                        canvas.dataset.income = JSON.stringify(data.income);
+                        canvas.dataset.expenses = JSON.stringify(data.expenses);
+                    }
+                    drawExpenseChart(canvas);
                 });
+        } else {
+            drawExpenseChart(canvas);
+        }
+    }
+
+    function drawExpenseChart(canvas) {
+        if (typeof Chart === 'undefined') return;
+        if (state.chartInstance) { state.chartInstance.destroy(); }
+
+        state.chartInstance = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse(canvas.dataset.labels || '[]'),
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: JSON.parse(canvas.dataset.income || '[]'),
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Expenses',
+                        data: JSON.parse(canvas.dataset.expenses || '[]'),
+                        backgroundColor: '#ef4444',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
             }
         });
     }
 
+    function bindChartRange() {
+        document.querySelectorAll('.chart-range-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.chart-range-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                renderExpenseChart(parseInt(btn.getAttribute('data-months')));
+            });
+        });
+    }
+
     function renderCalendar() {
-        const calendar = document.getElementById('dashboardCalendar');
-        if (!calendar) {
-            return;
-        }
+        var calendar = document.getElementById('dashboardCalendar');
+        if (!calendar) return;
 
-        const firstDay = new Date(state.calendarYear, state.calendarMonth, 1);
-        const lastDay = new Date(state.calendarYear, state.calendarMonth + 1, 0);
-        const startOffset = firstDay.getDay();
-        const totalDays = lastDay.getDate();
-        const today = new Date();
-        const monthLabel = calendar.dataset.monthLabel || firstDay.toLocaleString('en', { month: 'long', year: 'numeric' });
+        var firstDay = new Date(state.calendarYear, state.calendarMonth, 1);
+        var lastDay = new Date(state.calendarYear, state.calendarMonth + 1, 0);
+        var startOffset = firstDay.getDay();
+        var totalDays = lastDay.getDate();
+        var today = new Date();
+        var monthLabel = calendar.dataset.monthLabel || firstDay.toLocaleString('en', { month: 'long', year: 'numeric' });
 
-        let html = '<div class="calendar-grid">';
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        days.forEach((day) => {
+        var events = [];
+        try { events = JSON.parse(calendar.dataset.events || '[]'); } catch(e) {}
+
+        var eventsByDate = {};
+        events.forEach(function(ev) {
+            if (!eventsByDate[ev.event_date]) eventsByDate[ev.event_date] = [];
+            eventsByDate[ev.event_date].push(ev);
+        });
+
+        var html = '<div class="calendar-grid">';
+        var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        days.forEach(function(day) {
             html += '<div class="calendar-day-name">' + day + '</div>';
         });
 
-        for (let i = 0; i < startOffset; i += 1) {
+        for (var i = 0; i < startOffset; i++) {
             html += '<div class="calendar-cell is-muted"></div>';
         }
 
-        for (let day = 1; day <= totalDays; day += 1) {
-            const isToday = today.getMonth() === state.calendarMonth && today.getFullYear() === state.calendarYear && today.getDate() === day;
-            html += '<div class="calendar-cell' + (isToday ? ' is-today' : '') + '">';
+        for (var day = 1; day <= totalDays; day++) {
+            var isToday = today.getMonth() === state.calendarMonth && today.getFullYear() === state.calendarYear && today.getDate() === day;
+            var dateStr = state.calendarYear + '-' + String(state.calendarMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            var hasEvent = eventsByDate[dateStr] && eventsByDate[dateStr].length > 0;
+            var eventTitles = hasEvent ? eventsByDate[dateStr].map(function(e) { return e.title; }).join(', ') : '';
+
+            html += '<div class="calendar-cell' + (isToday ? ' is-today' : '') + (hasEvent ? ' has-event' : '') + '" data-date="' + dateStr + '">';
             html += '<span class="calendar-cell-number">' + day + '</span>';
-            html += '<span class="calendar-event-dot"></span>';
+            if (hasEvent) {
+                html += '<span class="calendar-event-dot"></span>';
+            }
             html += '</div>';
         }
 
         html += '</div>';
+        html += '<div class="calendar-tooltip" id="calendarTooltip"></div>';
         calendar.innerHTML = html;
-        const title = document.getElementById('calendarMonthTitle');
-        if (title) {
-            title.textContent = monthLabel;
-        }
+
+        var tooltip = document.getElementById('calendarTooltip');
+        calendar.querySelectorAll('.calendar-cell.has-event').forEach(function(cell) {
+            cell.addEventListener('mouseenter', function(e) {
+                var dateStr = cell.getAttribute('data-date');
+                var evts = eventsByDate[dateStr];
+                if (!evts || evts.length === 0) return;
+                var html2 = '<div class="tooltip-header">' + dateStr + '</div>';
+                evts.forEach(function(ev) {
+                    html2 += '<div class="tooltip-item"><span class="tooltip-dot"></span>' + ev.title + (ev.description ? '<span class="tooltip-desc">' + ev.description + '</span>' : '') + '</div>';
+                });
+                tooltip.innerHTML = html2;
+                tooltip.style.display = 'block';
+                var rect = cell.getBoundingClientRect();
+                var calRect = calendar.getBoundingClientRect();
+                tooltip.style.left = (rect.left - calRect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+                tooltip.style.top = (rect.top - calRect.top - tooltip.offsetHeight - 8) + 'px';
+            });
+            cell.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        });
+
+        var title = document.getElementById('calendarMonthTitle');
+        if (title) title.textContent = monthLabel;
     }
 
     function bindQuickActions() {
-        document.querySelectorAll('[data-modal-action]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const title = button.getAttribute('data-modal-title') || 'Quick Action';
-                const message = button.getAttribute('data-modal-message') || 'This feature will be available in a future update.';
-                if (typeof TaskNest !== 'undefined' && TaskNest.Modal) {
-                    TaskNest.Modal.create('quick-action', { title, content: '<p>' + message + '</p>', size: 'md' }).open();
-                } else {
-                    window.alert(message);
-                }
+        document.querySelectorAll('[data-modal-action]').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var action = button.getAttribute('data-modal-action');
+                if (action === 'task') { window.location.href = siteUrl + '/tasks-add.php'; }
+                else if (action === 'note') { window.location.href = siteUrl + '/notes-add.php'; }
+                else if (action === 'expense') { window.location.href = siteUrl + '/expenses-add.php'; }
+                else if (action === 'document') { window.location.href = siteUrl + '/documents-upload.php'; }
+                else if (action === 'habit') { window.location.href = siteUrl + '/habits-add.php'; }
+                else if (action === 'goal') { window.location.href = siteUrl + '/goals-add.php'; }
             });
         });
     }
 
     function bindSearch() {
-        const searchInput = document.getElementById('dashboardSearch');
-        const suggestions = document.getElementById('searchSuggestions');
-        if (!searchInput || !suggestions) {
-            return;
-        }
+        var searchInput = document.getElementById('dashboardSearch');
+        var suggestions = document.getElementById('searchSuggestions');
+        if (!searchInput || !suggestions) return;
 
-        searchInput.addEventListener('focus', () => suggestions.classList.add('show'));
-        searchInput.addEventListener('blur', () => setTimeout(() => suggestions.classList.remove('show'), 150));
-        searchInput.addEventListener('input', (event) => {
-            const value = event.target.value.trim().toLowerCase();
-            const items = suggestions.querySelectorAll('button');
-            items.forEach((item) => {
-                const text = item.textContent.toLowerCase();
+        searchInput.addEventListener('focus', function() { suggestions.classList.add('show'); });
+        searchInput.addEventListener('blur', function() { setTimeout(function() { suggestions.classList.remove('show'); }, 150); });
+        searchInput.addEventListener('input', function(event) {
+            var value = event.target.value.trim().toLowerCase();
+            var items = suggestions.querySelectorAll('button');
+            items.forEach(function(item) {
+                var text = item.textContent.toLowerCase();
                 item.style.display = text.includes(value) ? 'block' : 'none';
             });
         });

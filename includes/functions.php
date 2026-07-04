@@ -466,6 +466,63 @@ function getExpenseChartData($mysqli, $user_id, $months = 6) {
     return ['labels' => $labels, 'values' => $values];
 }
 
+function getIncomeExpenseChartData($mysqli, $user_id, $months = 6) {
+    $labels = [];
+    $income = [];
+    $expenses = [];
+
+    if (tableExists($mysqli, 'expenses')) {
+        $stmt = safePrepare($mysqli, "SELECT DATE_FORMAT(transaction_date, '%b') AS month_label, type, SUM(amount) AS total FROM expenses WHERE user_id = ? AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH) GROUP BY YEAR(transaction_date), MONTH(transaction_date), type ORDER BY MIN(transaction_date) ASC");
+        if ($stmt) {
+            $stmt->bind_param('ii', $user_id, $months);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $monthly = [];
+            while ($row = $result->fetch_assoc()) {
+                $key = $row['month_label'];
+                if (!isset($monthly[$key])) $monthly[$key] = ['income' => 0, 'expense' => 0];
+                $monthly[$key][$row['type']] = (float) $row['total'];
+            }
+            for ($i = $months - 1; $i >= 0; $i--) {
+                $key = date('M', strtotime("-$i months"));
+                $labels[] = $key;
+                $income[] = $monthly[$key]['income'] ?? 0;
+                $expenses[] = $monthly[$key]['expense'] ?? 0;
+            }
+        }
+    }
+
+    if (empty($labels)) {
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $labels[] = date('M', strtotime("-$i months"));
+            $income[] = 0;
+            $expenses[] = 0;
+        }
+    }
+
+    return ['labels' => $labels, 'income' => $income, 'expenses' => $expenses];
+}
+
+function getCategoryBreakdownData($mysqli, $user_id) {
+    $labels = [];
+    $values = [];
+
+    if (tableExists($mysqli, 'expenses')) {
+        $stmt = safePrepare($mysqli, "SELECT ec.name AS label, SUM(e.amount) AS total FROM expenses e LEFT JOIN expense_categories ec ON ec.id = e.category_id WHERE e.user_id = ? AND e.type = 'expense' GROUP BY e.category_id ORDER BY total DESC LIMIT 8");
+        if ($stmt) {
+            $stmt->bind_param('i', $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            while ($row = $result->fetch_assoc()) {
+                $labels[] = $row['label'] ?? 'Uncategorized';
+                $values[] = (float) $row['total'];
+            }
+        }
+    }
+
+    return ['labels' => $labels, 'values' => $values];
+}
+
 /**
  * Prepare task completion chart data.
  */
@@ -534,6 +591,62 @@ function getCalendarEvents($mysqli, $user_id, $days = 30) {
     }
 
     return $events;
+}
+
+function getAllCalendarEvents($mysqli, $user_id) {
+    if (!tableExists($mysqli, 'calendar_events')) {
+        return [];
+    }
+    $stmt = safePrepare($mysqli, "SELECT id, title, DATE_FORMAT(event_date, '%Y-%m-%d') AS event_date, description FROM calendar_events WHERE user_id = ? ORDER BY event_date ASC");
+    if (!$stmt) { return []; }
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $events = [];
+    while ($row = $result->fetch_assoc()) { $events[] = $row; }
+    return $events;
+}
+
+function saveCalendarEventHandler($mysqli, $user_id, $post) {
+    if (!tableExists($mysqli, 'calendar_events')) {
+        $mysqli->query("CREATE TABLE IF NOT EXISTS calendar_events (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            title VARCHAR(150) NOT NULL,
+            event_date DATE NOT NULL,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_calendar_user_date (user_id, event_date),
+            CONSTRAINT fk_calendar_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    $title = trim($post['title'] ?? '');
+    if ($title === '') { return ['success' => false, 'message' => 'Event title is required.']; }
+    $eventDate = $post['event_date'] ?? '';
+    if ($eventDate === '') { return ['success' => false, 'message' => 'Event date is required.']; }
+    $description = trim($post['description'] ?? '');
+    $eventId = !empty($post['event_id']) ? (int) $post['event_id'] : 0;
+
+    if ($eventId > 0) {
+        $stmt = safePrepare($mysqli, "UPDATE calendar_events SET title = ?, event_date = ?, description = ? WHERE id = ? AND user_id = ?");
+        $stmt->bind_param('sssii', $title, $eventDate, $description, $eventId, $user_id);
+        if ($stmt->execute()) { return ['success' => true, 'message' => 'Event updated.']; }
+        return ['success' => false, 'message' => 'Unable to update event.'];
+    }
+
+    $stmt = safePrepare($mysqli, "INSERT INTO calendar_events (user_id, title, event_date, description) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param('isss', $user_id, $title, $eventDate, $description);
+    if ($stmt->execute()) { return ['success' => true, 'message' => 'Event created.', 'event_id' => $stmt->insert_id]; }
+    return ['success' => false, 'message' => 'Unable to create event.'];
+}
+
+function deleteCalendarEventHandler($mysqli, $user_id, $post) {
+    $eventId = !empty($post['event_id']) ? (int) $post['event_id'] : 0;
+    if ($eventId <= 0) { return ['success' => false, 'message' => 'Invalid event.']; }
+    $stmt = safePrepare($mysqli, "DELETE FROM calendar_events WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $eventId, $user_id);
+    if ($stmt->execute()) { return ['success' => true, 'message' => 'Event deleted.']; }
+    return ['success' => false, 'message' => 'Unable to delete event.'];
 }
 
 /**
@@ -648,6 +761,13 @@ function ensureTaskTablesExist($mysqli) {
         if (!$mysqli->query($statement)) {
             logError("Table creation failed: " . $mysqli->error . " | Query: " . substr($statement, 0, 200), 'SQL_ERROR');
         }
+    }
+}
+
+function ensureTaskFilePathColumn($mysqli) {
+    $result = $mysqli->query("SHOW COLUMNS FROM tasks LIKE 'file_path'");
+    if ($result && $result->num_rows === 0) {
+        $mysqli->query("ALTER TABLE tasks ADD COLUMN file_path VARCHAR(500) DEFAULT NULL AFTER completed");
     }
 }
 
@@ -813,6 +933,10 @@ function saveTaskHandler($mysqli, $user_id, $post) {
     $reminderDatetime = !empty($post['reminder_datetime']) ? $post['reminder_datetime'] : null;
     $description = trim($post['description'] ?? '');
     $completed = ($status === 'Completed') ? 1 : 0;
+    $filePath = trim($post['file_path'] ?? '');
+
+    // Ensure file_path column exists
+    ensureTaskFilePathColumn($mysqli);
 
     if ($categoryId !== null) {
         $categoryStmt = safePrepare($mysqli, 'SELECT id FROM task_categories WHERE id = ? AND user_id = ? AND is_deleted = 0');
@@ -824,8 +948,8 @@ function saveTaskHandler($mysqli, $user_id, $post) {
     }
 
     if ($taskId > 0) {
-        $stmt = safePrepare($mysqli, "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, category_id = ?, due_date = ?, reminder_datetime = ?, completed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
-        $stmt->bind_param('ssssissiii', $title, $description, $status, $priority, $categoryId, $dueDate, $reminderDatetime, $completed, $taskId, $user_id);
+        $stmt = safePrepare($mysqli, "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, category_id = ?, due_date = ?, reminder_datetime = ?, completed = ?, file_path = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+        $stmt->bind_param('ssssissiiii', $title, $description, $status, $priority, $categoryId, $dueDate, $reminderDatetime, $completed, $filePath, $taskId, $user_id);
         if ($stmt->execute()) {
             logTaskActivity($mysqli, $user_id, $taskId, 'task_updated', 'Task updated');
             return ['success' => true, 'message' => 'Task updated successfully.'];
@@ -833,8 +957,8 @@ function saveTaskHandler($mysqli, $user_id, $post) {
         return ['success' => false, 'message' => 'Unable to update task.'];
     }
 
-    $stmt = safePrepare($mysqli, "INSERT INTO tasks (user_id, title, description, status, priority, category_id, due_date, reminder_datetime, completed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('issssissi', $user_id, $title, $description, $status, $priority, $categoryId, $dueDate, $reminderDatetime, $completed);
+    $stmt = safePrepare($mysqli, "INSERT INTO tasks (user_id, title, description, status, priority, category_id, due_date, reminder_datetime, completed, file_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('issssissis', $user_id, $title, $description, $status, $priority, $categoryId, $dueDate, $reminderDatetime, $completed, $filePath);
     if ($stmt->execute()) {
         $newId = $stmt->insert_id;
         logTaskActivity($mysqli, $user_id, $newId, 'task_created', 'Task created');
@@ -1088,6 +1212,13 @@ function ensureNoteTablesExist($mysqli) {
     }
 }
 
+function ensureNoteFilePathColumn($mysqli) {
+    $result = $mysqli->query("SHOW COLUMNS FROM notes LIKE 'file_path'");
+    if ($result && $result->num_rows === 0) {
+        $mysqli->query("ALTER TABLE notes ADD COLUMN file_path VARCHAR(500) DEFAULT NULL AFTER is_archived");
+    }
+}
+
 function logNoteActivity($mysqli, $user_id, $note_id, $action, $description) {
     ensureNoteTablesExist($mysqli);
     if (tableExists($mysqli, 'activity_logs')) {
@@ -1219,6 +1350,10 @@ function saveNoteHandler($mysqli, $user_id, $post) {
     $categoryId = !empty($post['category_id']) ? (int) $post['category_id'] : null;
     $isPinned = !empty($post['is_pinned']) ? 1 : 0;
     $isArchived = !empty($post['is_archived']) ? 1 : 0;
+    $filePath = trim($post['file_path'] ?? '');
+
+    // Ensure file_path column exists
+    ensureNoteFilePathColumn($mysqli);
 
     if ($categoryId !== null) {
         $catStmt = safePrepare($mysqli, 'SELECT id FROM note_categories WHERE id = ? AND user_id = ? AND is_deleted = 0');
@@ -1230,8 +1365,8 @@ function saveNoteHandler($mysqli, $user_id, $post) {
     }
 
     if ($noteId > 0) {
-        $stmt = safePrepare($mysqli, "UPDATE notes SET title = ?, content = ?, category_id = ?, is_pinned = ?, is_archived = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
-        $stmt->bind_param('ssiiiii', $title, $content, $categoryId, $isPinned, $isArchived, $noteId, $user_id);
+        $stmt = safePrepare($mysqli, "UPDATE notes SET title = ?, content = ?, category_id = ?, is_pinned = ?, is_archived = ?, file_path = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+        $stmt->bind_param('ssiiisii', $title, $content, $categoryId, $isPinned, $isArchived, $filePath, $noteId, $user_id);
         if ($stmt->execute()) {
             logNoteActivity($mysqli, $user_id, $noteId, 'note_updated', 'Note updated: ' . $title);
             return ['success' => true, 'message' => 'Note updated successfully.'];
@@ -1239,8 +1374,8 @@ function saveNoteHandler($mysqli, $user_id, $post) {
         return ['success' => false, 'message' => 'Unable to update note.'];
     }
 
-    $stmt = safePrepare($mysqli, "INSERT INTO notes (user_id, title, content, category_id, is_pinned, is_archived) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('issiii', $user_id, $title, $content, $categoryId, $isPinned, $isArchived);
+    $stmt = safePrepare($mysqli, "INSERT INTO notes (user_id, title, content, category_id, is_pinned, is_archived, file_path) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('issiiis', $user_id, $title, $content, $categoryId, $isPinned, $isArchived, $filePath);
     if ($stmt->execute()) {
         $newId = $stmt->insert_id;
         logNoteActivity($mysqli, $user_id, $newId, 'note_created', 'Note created: ' . $title);
@@ -2616,11 +2751,56 @@ function ensureHabitGoalShoppingTablesExist($mysqli) {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             INDEX idx_shop_user (user_id, is_deleted)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+        "CREATE TABLE IF NOT EXISTS goal_categories (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            color VARCHAR(20) DEFAULT '#6366f1',
+            is_deleted TINYINT(1) DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE KEY unique_goal_cat_user (user_id, name),
+            INDEX idx_gc_user_id (user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+        "CREATE TABLE IF NOT EXISTS shopping_categories (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            color VARCHAR(20) DEFAULT '#6366f1',
+            is_deleted TINYINT(1) DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE KEY unique_shop_cat_user (user_id, name),
+            INDEX idx_sc_user_id (user_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     ];
     foreach ($statements as $s) {
         if (!$mysqli->query($s)) {
             logError("Habit/Goal/Shopping table creation failed: " . $mysqli->error . " | Query: " . substr($s, 0, 200), 'SQL_ERROR');
+        }
+    }
+
+    if (tableExists($mysqli, 'goals')) {
+        $result = $mysqli->query("SHOW COLUMNS FROM goals LIKE 'category'");
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if (strpos($row['Type'], 'varchar') !== false) {
+                $mysqli->query("UPDATE goals SET category = NULL WHERE category = ''");
+                $mysqli->query("ALTER TABLE goals MODIFY COLUMN category INT DEFAULT NULL");
+            }
+        }
+    }
+    if (tableExists($mysqli, 'shopping')) {
+        $result = $mysqli->query("SHOW COLUMNS FROM shopping LIKE 'category'");
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if (strpos($row['Type'], 'varchar') !== false) {
+                $mysqli->query("UPDATE shopping SET category = NULL WHERE category = ''");
+                $mysqli->query("ALTER TABLE shopping MODIFY COLUMN category INT DEFAULT NULL");
+            }
         }
     }
 }
@@ -2868,7 +3048,7 @@ function saveGoalHandler($mysqli, $user_id, $post) {
 
     $goalId = !empty($post['goal_id']) ? (int) $post['goal_id'] : 0;
     $description = trim($post['description'] ?? '');
-    $category = trim($post['category'] ?? '');
+    $categoryId = !empty($post['category_id']) ? (int) $post['category_id'] : null;
     $targetValue = filter_var($post['target_value'] ?? 0, FILTER_VALIDATE_FLOAT) ?: 0;
     $currentValue = filter_var($post['current_value'] ?? 0, FILTER_VALIDATE_FLOAT) ?: 0;
     $unit = trim($post['unit'] ?? '');
@@ -2884,13 +3064,13 @@ function saveGoalHandler($mysqli, $user_id, $post) {
 
     if ($goalId > 0) {
         $stmt = safePrepare($mysqli, "UPDATE goals SET title = ?, description = ?, category = ?, target_value = ?, current_value = ?, unit = ?, start_date = ?, due_date = ?, completed_date = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
-        $stmt->bind_param('sssddsssssii', $title, $description, $category, $targetValue, $currentValue, $unit, $startDate, $dueDate, $completedDate, $status, $goalId, $user_id);
+        $stmt->bind_param('ssidsddsssii', $title, $description, $categoryId, $targetValue, $currentValue, $unit, $startDate, $dueDate, $completedDate, $status, $goalId, $user_id);
         if ($stmt->execute()) { return ['success' => true, 'message' => 'Goal updated.']; }
         return ['success' => false, 'message' => 'Unable to update goal.'];
     }
 
     $stmt = safePrepare($mysqli, "INSERT INTO goals (user_id, title, description, category, target_value, current_value, unit, start_date, due_date, completed_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('isssddsssss', $user_id, $title, $description, $category, $targetValue, $currentValue, $unit, $startDate, $dueDate, $completedDate, $status);
+    $stmt->bind_param('isidsddsss', $user_id, $title, $description, $categoryId, $targetValue, $currentValue, $unit, $startDate, $dueDate, $completedDate, $status);
     if ($stmt->execute()) {
         logHabitActivity($mysqli, $user_id, $stmt->insert_id, 'goal_created', 'Goal created: ' . $title);
         return ['success' => true, 'message' => 'Goal created.', 'goal_id' => $stmt->insert_id];
@@ -3003,18 +3183,18 @@ function saveShoppingHandler($mysqli, $user_id, $post) {
     $quantity = max(1, (int) ($post['quantity'] ?? 1));
     $estimatedPrice = filter_var($post['estimated_price'] ?? 0, FILTER_VALIDATE_FLOAT) ?: 0;
     $actualPrice = filter_var($post['actual_price'] ?? 0, FILTER_VALIDATE_FLOAT) ?: 0;
-    $category = trim($post['category'] ?? '');
+    $categoryId = !empty($post['category_id']) ? (int) $post['category_id'] : null;
     $notes = trim($post['notes'] ?? '');
 
     if ($itemId > 0) {
         $stmt = safePrepare($mysqli, "UPDATE shopping SET name = ?, quantity = ?, estimated_price = ?, actual_price = ?, category = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
-        $stmt->bind_param('sidssisi', $name, $quantity, $estimatedPrice, $actualPrice, $category, $notes, $itemId, $user_id);
+        $stmt->bind_param('sidisii', $name, $quantity, $estimatedPrice, $actualPrice, $categoryId, $notes, $itemId, $user_id);
         if ($stmt->execute()) { return ['success' => true, 'message' => 'Item updated.']; }
         return ['success' => false, 'message' => 'Unable to update item.'];
     }
 
     $stmt = safePrepare($mysqli, "INSERT INTO shopping (user_id, name, quantity, estimated_price, actual_price, category, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('isiddss', $user_id, $name, $quantity, $estimatedPrice, $actualPrice, $category, $notes);
+    $stmt->bind_param('isiddis', $user_id, $name, $quantity, $estimatedPrice, $actualPrice, $categoryId, $notes);
     if ($stmt->execute()) {
         logHabitActivity($mysqli, $user_id, $stmt->insert_id, 'shopping_created', 'Shopping item added: ' . $name);
         return ['success' => true, 'message' => 'Item added.', 'item_id' => $stmt->insert_id];
@@ -3061,6 +3241,92 @@ function getShoppingItemHandler($mysqli, $user_id, $post) {
     $item = $result->fetch_assoc();
     if (!$item) { return ['success' => false, 'message' => 'Item not found.']; }
     return ['success' => true, 'item' => $item];
+}
+
+// --- Goal Categories ---
+
+function getGoalCategories($mysqli, $user_id) {
+    ensureHabitGoalShoppingTablesExist($mysqli);
+    $stmt = safePrepare($mysqli, "SELECT id, name, color FROM goal_categories WHERE user_id = ? AND is_deleted = 0 ORDER BY name ASC");
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $categories = [];
+    while ($row = $result->fetch_assoc()) { $categories[] = $row; }
+    return $categories;
+}
+
+function saveGoalCategoryHandler($mysqli, $user_id, $post) {
+    ensureHabitGoalShoppingTablesExist($mysqli);
+    $name = trim($post['name'] ?? '');
+    if ($name === '') { return ['success' => false, 'message' => 'Category name is required.']; }
+    $color = trim($post['color'] ?? '#6366f1');
+    $catId = !empty($post['category_id']) ? (int) $post['category_id'] : 0;
+
+    if ($catId > 0) {
+        $stmt = safePrepare($mysqli, "UPDATE goal_categories SET name = ?, color = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+        $stmt->bind_param('ssii', $name, $color, $catId, $user_id);
+        if ($stmt->execute()) { return ['success' => true, 'message' => 'Category updated.']; }
+        return ['success' => false, 'message' => 'Unable to update category.'];
+    }
+
+    $stmt = safePrepare($mysqli, "INSERT INTO goal_categories (user_id, name, color) VALUES (?, ?, ?)");
+    $stmt->bind_param('iss', $user_id, $name, $color);
+    if ($stmt->execute()) { return ['success' => true, 'message' => 'Category created.']; }
+    return ['success' => false, 'message' => 'Unable to create category.'];
+}
+
+function deleteGoalCategoryHandler($mysqli, $user_id, $post) {
+    ensureHabitGoalShoppingTablesExist($mysqli);
+    $catId = !empty($post['category_id']) ? (int) $post['category_id'] : 0;
+    if ($catId <= 0) { return ['success' => false, 'message' => 'Invalid category.']; }
+    $stmt = safePrepare($mysqli, "UPDATE goal_categories SET is_deleted = 1 WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $catId, $user_id);
+    if ($stmt->execute()) { return ['success' => true, 'message' => 'Category deleted.']; }
+    return ['success' => false, 'message' => 'Unable to delete category.'];
+}
+
+// --- Shopping Categories ---
+
+function getShoppingCategories($mysqli, $user_id) {
+    ensureHabitGoalShoppingTablesExist($mysqli);
+    $stmt = safePrepare($mysqli, "SELECT id, name, color FROM shopping_categories WHERE user_id = ? AND is_deleted = 0 ORDER BY name ASC");
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $categories = [];
+    while ($row = $result->fetch_assoc()) { $categories[] = $row; }
+    return $categories;
+}
+
+function saveShoppingCategoryHandler($mysqli, $user_id, $post) {
+    ensureHabitGoalShoppingTablesExist($mysqli);
+    $name = trim($post['name'] ?? '');
+    if ($name === '') { return ['success' => false, 'message' => 'Category name is required.']; }
+    $color = trim($post['color'] ?? '#6366f1');
+    $catId = !empty($post['category_id']) ? (int) $post['category_id'] : 0;
+
+    if ($catId > 0) {
+        $stmt = safePrepare($mysqli, "UPDATE shopping_categories SET name = ?, color = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+        $stmt->bind_param('ssii', $name, $color, $catId, $user_id);
+        if ($stmt->execute()) { return ['success' => true, 'message' => 'Category updated.']; }
+        return ['success' => false, 'message' => 'Unable to update category.'];
+    }
+
+    $stmt = safePrepare($mysqli, "INSERT INTO shopping_categories (user_id, name, color) VALUES (?, ?, ?)");
+    $stmt->bind_param('iss', $user_id, $name, $color);
+    if ($stmt->execute()) { return ['success' => true, 'message' => 'Category created.']; }
+    return ['success' => false, 'message' => 'Unable to create category.'];
+}
+
+function deleteShoppingCategoryHandler($mysqli, $user_id, $post) {
+    ensureHabitGoalShoppingTablesExist($mysqli);
+    $catId = !empty($post['category_id']) ? (int) $post['category_id'] : 0;
+    if ($catId <= 0) { return ['success' => false, 'message' => 'Invalid category.']; }
+    $stmt = safePrepare($mysqli, "UPDATE shopping_categories SET is_deleted = 1 WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $catId, $user_id);
+    if ($stmt->execute()) { return ['success' => true, 'message' => 'Category deleted.']; }
+    return ['success' => false, 'message' => 'Unable to delete category.'];
 }
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

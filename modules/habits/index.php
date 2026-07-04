@@ -22,7 +22,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="habits-subtitle">Build streaks and track your daily consistency.</p>
         </div>
         <div class="habits-toolbar-actions">
-            <button class="btn btn-primary" type="button" id="openHabitModal">Add Habit</button>
+            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/habits-add.php">Add Habit</a>
         </div>
     </div>
 
@@ -66,9 +66,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                     <div class="habit-meta">Logged <?php echo (int) $habit['logged_today']; ?>x today &middot; <?php echo (int) $habit['logged_week']; ?>x this week</div>
                     <div class="habit-actions">
-                        <button class="btn btn-secondary btn-sm" type="button" data-action="log" data-id="<?php echo (int) $habit['id']; ?>">Log Today</button>
-                        <button class="btn btn-secondary btn-sm" type="button" data-action="edit" data-id="<?php echo (int) $habit['id']; ?>">Edit</button>
-                        <button class="btn btn-danger btn-sm" type="button" data-action="delete" data-id="<?php echo (int) $habit['id']; ?>">Delete</button>
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="logHabit(<?php echo (int) $habit['id']; ?>)">Log Today</button>
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/habits-edit.php?id=<?php echo (int) $habit['id']; ?>'">Edit</button>
+                        <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Habit', 'Are you sure?', function(){ deleteHabit(<?php echo (int) $habit['id']; ?>); })">Delete</button>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -77,7 +77,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F3AF;</div>
                 <h3>No habits yet</h3>
                 <p>Create your first habit to start building streaks.</p>
-                <button class="btn btn-primary" type="button" id="emptyStateAddHabit">Add Habit</button>
+                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/habits-add.php">Add Habit</a>
             </div>
         <?php endif; ?>
     </div>
@@ -85,31 +85,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="habit-chart-panel">
         <h3>Weekly Activity</h3>
         <canvas id="habitWeeklyChart" style="max-height:200px;"></canvas>
-    </div>
-</div>
-
-<div class="modal" id="habitModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="habitModal"></div>
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3 id="habitModalTitle">Add Habit</h3>
-            <button class="modal-close" type="button" data-close-modal="habitModal">&times;</button>
-        </div>
-        <form id="habitForm" class="modal-body">
-            <input type="hidden" name="habit_id" id="habitId">
-            <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-            <div class="form-group"><label for="habitName">Name</label><input type="text" id="habitName" name="name" class="form-control" required></div>
-            <div class="form-group"><label for="habitDescription">Description</label><textarea id="habitDescription" name="description" class="form-control" rows="2"></textarea></div>
-            <div class="form-row">
-                <div class="form-group"><label for="habitFrequency">Frequency</label><select id="habitFrequency" name="frequency" class="form-control"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
-                <div class="form-group"><label for="habitTargetCount">Target Count</label><input type="number" id="habitTargetCount" name="target_count" class="form-control" min="1" value="1"></div>
-            </div>
-            <div class="form-group"><label for="habitColor">Color</label><input type="color" id="habitColor" name="color" class="form-control" value="#6366f1"></div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="habitModal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Habit</button>
-            </div>
-        </form>
     </div>
 </div>
 

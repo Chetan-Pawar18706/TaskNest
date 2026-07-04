@@ -17,6 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'toggle_complete': echo json_encode(toggleShoppingCompleteHandler($mysqli, $user_id, $_POST)); break;
         case 'delete_item': echo json_encode(deleteShoppingHandler($mysqli, $user_id, $_POST)); break;
         case 'clear_completed': echo json_encode(clearCompletedShoppingHandler($mysqli, $user_id, $_POST)); break;
+        case 'save_category': echo json_encode(saveShoppingCategoryHandler($mysqli, $user_id, $_POST)); break;
+        case 'delete_category': echo json_encode(deleteShoppingCategoryHandler($mysqli, $user_id, $_POST)); break;
         default: echo json_encode(['success' => false, 'message' => 'Unknown action']);
     }
     exit;

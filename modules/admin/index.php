@@ -39,6 +39,7 @@ if ($tab === 'settings') {
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
+<input type="hidden" id="admin-csrf-token" value="<?php echo $auth->generateCsrfToken(); ?>">
 <div class="admin-page">
     <div class="admin-toolbar">
         <div>
@@ -181,7 +182,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="admin-tab-content <?php echo $tab === 'settings' ? 'active' : ''; ?>" id="tab-settings">
         <?php if ($settingsData): ?>
             <form id="adminSettingsForm" class="settings-form">
-                <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
                 <input type="hidden" name="action" value="save_settings">
                 <?php foreach ($settingsData as $s): ?>
                     <div class="form-group">
@@ -214,7 +214,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         });
     });
 
-    function getCsrfToken() { var t = document.querySelector('input[name="csrf_token"]'); return t ? t.value : ''; }
+    function getCsrfToken() { var t = document.getElementById('admin-csrf-token'); return t ? t.value : ''; }
     function showToast(msg, type) { if (window.TaskNest && window.TaskNest.Toast) window.TaskNest.Toast.show(msg, type); else alert(msg); }
 
     document.querySelectorAll('[data-action="toggle_user"]').forEach(function(btn) {
@@ -247,6 +247,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     settingsForm && settingsForm.addEventListener('submit', function(e) {
         e.preventDefault();
         var p = new FormData(settingsForm);
+        p.append('csrf_token', getCsrfToken());
         fetch('admin.php', { method: 'POST', body: p }).then(function(r){return r.json();}).then(function(r){
             if (r.success) showToast(r.message, 'success'); else showToast(r.message || 'Failed.', 'error');
         });

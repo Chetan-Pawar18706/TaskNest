@@ -292,15 +292,15 @@
 }
 
 .moon-icon {
-    display: none;
+    display: none !important;
 }
 
 body[data-theme="dark"] .sun-icon {
-    display: none;
+    display: none !important;
 }
 
 body[data-theme="dark"] .moon-icon {
-    display: block;
+    display: block !important;
 }
 
 .navbar-icon-btn .icon {
@@ -456,20 +456,21 @@ body[data-theme="dark"] .moon-icon {
    ============================================ */
 
 .form-group {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
 }
 
 .form-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-lg);
+    gap: var(--spacing-sm);
 }
 
 label {
     display: block;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 0.2rem;
     font-weight: var(--font-weight-medium);
     color: var(--text-primary);
+    font-size: 0.85rem;
 }
 
 .form-input,
@@ -477,13 +478,14 @@ label {
 .form-select,
 .form-control {
     width: 100%;
-    padding: var(--spacing-md);
+    padding: 0.45rem 0.65rem;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-size: var(--font-size-base);
+    font-size: 0.875rem;
     transition: all var(--transition-fast);
+    height: 36px;
 }
 
 .form-input::placeholder,
@@ -504,7 +506,8 @@ label {
 .form-textarea,
 textarea.form-control {
     resize: vertical;
-    min-height: 80px;
+    min-height: 60px;
+    height: auto;
 }
 
 select.form-control {
@@ -516,8 +519,8 @@ select.form-control {
 }
 
 input[type="color"].form-control {
-    padding: 0.25rem;
-    height: 42px;
+    padding: 0.15rem;
+    height: 36px;
     cursor: pointer;
 }
 
@@ -527,8 +530,8 @@ input[type="datetime-local"].form-control {
 }
 
 .form-checkbox {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
     accent-color: var(--color-primary);
 }
@@ -536,8 +539,8 @@ input[type="datetime-local"].form-control {
 .form-group.checkbox {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
 }
 
 .form-group.checkbox label {
@@ -546,7 +549,7 @@ input[type="datetime-local"].form-control {
 
 .form-group small {
     display: block;
-    margin-top: var(--spacing-sm);
+    margin-top: 0.15rem;
 }
 
 /* ============================================

@@ -42,8 +42,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="tasks-subtitle">Manage your work, priorities, and deadlines.</p>
         </div>
         <div class="tasks-toolbar-actions">
-            <button class="btn btn-secondary" type="button" id="openCategoryModal">Manage Categories</button>
-            <button class="btn btn-primary" type="button" id="openTaskModal">Add Task</button>
+            <a href="<?php echo SITE_URL; ?>/tasks-categories.php" class="btn btn-secondary">Manage Categories</a>
+            <a href="<?php echo SITE_URL; ?>/tasks-add.php" class="btn btn-primary">Add Task</a>
         </div>
     </div>
 
@@ -139,8 +139,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </div>
                                     <div class="task-meta"><?php echo htmlspecialchars($task['category_name'] ?? 'Uncategorized'); ?></div>
                                     <div class="task-actions-inline">
-                                        <button class="link-btn" type="button" data-action="view" data-id="<?php echo (int) $task['id']; ?>">View</button>
-                                        <button class="link-btn" type="button" data-action="edit" data-id="<?php echo (int) $task['id']; ?>">Edit</button>
+                                        <a class="link-btn" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                        <button class="link-btn" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -169,7 +169,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 <td><span class="priority-badge priority-<?php echo strtolower($task['priority'] ?? 'medium'); ?>"><?php echo htmlspecialchars($task['priority'] ?? 'Medium'); ?></span></td>
                                 <td><span class="status-badge status-<?php echo strtolower(str_replace(' ', '-', $task['status'] ?? 'pending')); ?>"><?php echo htmlspecialchars($task['status'] ?? 'Pending'); ?></span></td>
                                 <td><?php echo htmlspecialchars($task['due_date'] ?? '—'); ?></td>
-                                <td><button class="link-btn" type="button" data-action="view" data-id="<?php echo (int) $task['id']; ?>">View</button></td>
+                                <td>
+                                    <a class="link-btn" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                    <button class="link-btn" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -186,9 +189,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <p><?php echo htmlspecialchars($task['description'] ?: 'No description'); ?></p>
                             <div class="task-meta">Category: <?php echo htmlspecialchars($task['category_name'] ?? 'Uncategorized'); ?></div>
                             <div class="task-meta">Due: <?php echo htmlspecialchars($task['due_date'] ?? '—'); ?></div>
+                            <?php if (!empty($task['file_path'])): ?>
+                            <div class="task-meta"><a href="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($task['file_path']); ?>" target="_blank" style="color:var(--primary);text-decoration:underline;">📎 Attachment</a></div>
+                            <?php endif; ?>
                             <div class="task-actions">
-                                <button class="btn btn-secondary btn-sm" type="button" data-action="view" data-id="<?php echo (int) $task['id']; ?>">View</button>
-                                <button class="btn btn-secondary btn-sm" type="button" data-action="edit" data-id="<?php echo (int) $task['id']; ?>">Edit</button>
+                                <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                <button class="btn btn-secondary btn-sm" type="button" onclick="completeTask(<?php echo (int) $task['id']; ?>)">Complete</button>
+                                <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
                             </div>
                         </article>
                     <?php endforeach; ?>
@@ -206,10 +213,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <p><?php echo htmlspecialchars($task['description'] ?: 'No description'); ?></p>
                             <div class="task-meta">Category: <?php echo htmlspecialchars($task['category_name'] ?? 'Uncategorized'); ?></div>
                             <div class="task-meta">Due: <?php echo htmlspecialchars($task['due_date'] ?? '—'); ?></div>
+                            <?php if (!empty($task['file_path'])): ?>
+                            <div class="task-meta"><a href="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($task['file_path']); ?>" target="_blank" style="color:var(--primary);text-decoration:underline;">📎 Attachment</a></div>
+                            <?php endif; ?>
                             <div class="task-actions">
-                                <button class="btn btn-secondary btn-sm" type="button" data-action="view" data-id="<?php echo (int) $task['id']; ?>">View</button>
-                                <button class="btn btn-secondary btn-sm" type="button" data-action="edit" data-id="<?php echo (int) $task['id']; ?>">Edit</button>
-                                <button class="btn btn-secondary btn-sm" type="button" data-action="complete" data-id="<?php echo (int) $task['id']; ?>">Complete</button>
+                                <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                <button class="btn btn-secondary btn-sm" type="button" onclick="completeTask(<?php echo (int) $task['id']; ?>)">Complete</button>
+                                <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
                             </div>
                         </article>
                     <?php endforeach; ?>
@@ -220,7 +230,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">✓</div>
                 <h3>No tasks yet</h3>
                 <p>Create your first task to start organizing work.</p>
-                <button class="btn btn-primary" type="button" id="emptyStateAddTask">Add Task</button>
+                <a href="<?php echo SITE_URL; ?>/tasks-add.php" class="btn btn-primary">Add Task</a>
             </div>
         <?php endif; ?>
     </div>
@@ -233,119 +243,5 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     <?php endif; ?>
 </div>
-
-<div class="modal" id="taskModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="taskModal"></div>
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3 id="taskModalTitle">Add Task</h3>
-            <button class="modal-close" type="button" data-close-modal="taskModal">×</button>
-        </div>
-        <form id="taskForm" class="modal-body">
-            <input type="hidden" name="task_id" id="taskId">
-            <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-            <div class="form-group">
-                <label for="taskTitle">Title</label>
-                <input type="text" id="taskTitle" name="title" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="taskDescription">Description</label>
-                <textarea id="taskDescription" name="description" class="form-control"></textarea>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="taskPriority">Priority</label>
-                    <select id="taskPriority" name="priority" class="form-control">
-                        <option value="Low">Low</option>
-                        <option value="Medium" selected>Medium</option>
-                        <option value="High">High</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="taskStatus">Status</label>
-                    <select id="taskStatus" name="status" class="form-control">
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="taskCategory">Category</label>
-                    <select id="taskCategory" name="category_id" class="form-control"></select>
-                </div>
-                <div class="form-group">
-                    <label for="taskDueDate">Due Date</label>
-                    <input type="date" id="taskDueDate" name="due_date" class="form-control">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="taskReminder">Reminder</label>
-                <input type="datetime-local" id="taskReminder" name="reminder_datetime" class="form-control">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="taskModal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Task</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="modal" id="categoryModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="categoryModal"></div>
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3>Manage Categories</h3>
-            <button class="modal-close" type="button" data-close-modal="categoryModal">×</button>
-        </div>
-        <div class="modal-body">
-            <form id="categoryForm" class="category-form">
-                <input type="hidden" name="category_id" id="categoryId">
-                <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-                <div class="form-group">
-                    <label for="categoryName">Name</label>
-                    <input type="text" id="categoryName" name="name" class="form-control" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="categoryColor">Color</label>
-                        <input type="color" id="categoryColor" name="color" class="form-control" value="#6366f1">
-                    </div>
-                    <div class="form-group">
-                        <label for="categoryIcon">Icon</label>
-                        <input type="text" id="categoryIcon" name="icon" class="form-control" placeholder="e.g. task">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-close-modal="categoryModal">Cancel</button>
-                    <button class="btn btn-primary" type="submit">Save Category</button>
-                </div>
-            </form>
-            <div class="category-list" id="categoryList"></div>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="confirmModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="confirmModal"></div>
-    <div class="modal-dialog modal-sm">
-        <div class="modal-header">
-            <h3 id="confirmModalTitle">Confirm</h3>
-            <button class="modal-close" type="button" data-close-modal="confirmModal">×</button>
-        </div>
-        <div class="modal-body">
-            <p id="confirmModalBody">Are you sure?</p>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="confirmModal">Cancel</button>
-                <button class="btn btn-danger" type="button" id="confirmActionBtn">Confirm</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    window.tasknestInitialFilters = <?php echo json_encode($filters, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-</script>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

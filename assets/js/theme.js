@@ -13,9 +13,10 @@
      * Initialize theme
      */
     function initTheme() {
+        const bodyTheme = document.body.getAttribute('data-theme');
         const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initialTheme = savedTheme || (prefersDark ? DARK_THEME : LIGHT_THEME);
+        const initialTheme = bodyTheme || savedTheme || (prefersDark ? DARK_THEME : LIGHT_THEME);
 
         setTheme(initialTheme);
 

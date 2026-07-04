@@ -18,7 +18,7 @@ $success = '';
 $stmt = safePrepare($mysqli, "SELECT * FROM settings WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$settings = $stmt->get_result()->fetch_assoc();
+$settings = $stmt->get_result()->fetch_assoc() ?: ['notifications_enabled' => 0];
 
 // Get user profile
 $stmt = safePrepare($mysqli, "SELECT * FROM users WHERE id = ?");
@@ -40,31 +40,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $timezone = sanitize($_POST['timezone'] ?? 'UTC');
         $theme = $_POST['theme'] ?? 'light';
         $notifications_enabled = isset($_POST['notifications_enabled']) ? 1 : 0;
+        $avatar_url = $profile['avatar_url'] ?? '';
         
-        // Update user profile
-        $stmt = safePrepare($mysqli, "
-            UPDATE users 
-            SET first_name = ?, last_name = ?, phone = ?, bio = ?, timezone = ?, theme = ?
-            WHERE id = ?
-        ");
-        $stmt->bind_param("ssssssi", $first_name, $last_name, $phone, $bio, $timezone, $theme, $user_id);
+        // Handle profile picture upload
+        if (!empty($_FILES['profile_picture']['name'])) {
+            $allowed = ['png','jpg','jpeg','gif','webp'];
+            $ext = strtolower(pathinfo($_FILES['profile_picture']['name'], PATHINFO_EXTENSION));
+            if (!in_array($ext, $allowed)) {
+                $errors[] = 'Profile picture must be PNG, JPG, GIF, or WebP.';
+            } elseif ($_FILES['profile_picture']['size'] > 5 * 1024 * 1024) {
+                $errors[] = 'Profile picture must be less than 5MB.';
+            } else {
+                $dir = __DIR__ . '/uploads/profile/';
+                if (!is_dir($dir)) mkdir($dir, 0755, true);
+                $filename = 'avatar_' . $user_id . '_' . time() . '.' . $ext;
+                if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $dir . $filename)) {
+                    // Delete old avatar if exists
+                    if ($avatar_url && strpos($avatar_url, 'uploads/profile/') === 0 && file_exists(__DIR__ . '/' . $avatar_url)) {
+                        unlink(__DIR__ . '/' . $avatar_url);
+                    }
+                    $avatar_url = 'uploads/profile/' . $filename;
+                } else {
+                    $errors[] = 'Failed to upload profile picture.';
+                }
+            }
+        } elseif (!empty($_POST['remove_picture'])) {
+            if ($avatar_url && strpos($avatar_url, 'uploads/profile/') === 0 && file_exists(__DIR__ . '/' . $avatar_url)) {
+                unlink(__DIR__ . '/' . $avatar_url);
+            }
+            $avatar_url = '';
+        }
         
-        if ($stmt->execute()) {
-            // Update settings
-            $stmt_settings = safePrepare($mysqli, "
-                UPDATE settings 
-                SET notifications_enabled = ?
-                WHERE user_id = ?
+        if (empty($errors)) {
+            // Update user profile
+            $stmt = safePrepare($mysqli, "
+                UPDATE users 
+                SET first_name = ?, last_name = ?, phone = ?, bio = ?, timezone = ?, theme = ?, avatar_url = ?
+                WHERE id = ?
             ");
-            $stmt_settings->bind_param("ii", $notifications_enabled, $user_id);
-            $stmt_settings->execute();
+            $stmt->bind_param("sssssssi", $first_name, $last_name, $phone, $bio, $timezone, $theme, $avatar_url, $user_id);
             
-            $success = 'Settings saved successfully!';
-            
-            // Reload auth to get updated data
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        } else {
-            $errors[] = 'Failed to save settings';
+            if ($stmt->execute()) {
+                // Update settings
+                $stmt_settings = safePrepare($mysqli, "
+                    UPDATE settings 
+                    SET notifications_enabled = ?
+                    WHERE user_id = ?
+                ");
+                $stmt_settings->bind_param("ii", $notifications_enabled, $user_id);
+                $stmt_settings->execute();
+                
+                $success = 'Settings saved successfully!';
+                
+                // Reload auth to get updated data
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                
+                // Apply theme immediately via JS
+                echo '<script>localStorage.setItem("tasknest-theme", "' . htmlspecialchars($theme) . '"); document.body.setAttribute("data-theme", "' . htmlspecialchars($theme) . '"); document.documentElement.classList.remove("light","dark"); document.documentElement.classList.add("' . htmlspecialchars($theme) . '");</script>';
+                
+                // Refresh profile data
+                $stmt = safePrepare($mysqli, "SELECT * FROM users WHERE id = ?");
+                $stmt->bind_param("i", $user_id);
+                $stmt->execute();
+                $profile = $stmt->get_result()->fetch_assoc();
+            } else {
+                $errors[] = 'Failed to save settings';
+            }
         }
     }
 }
@@ -93,11 +134,33 @@ include 'includes/header.php';
         </div>
         <?php endif; ?>
         
-        <form method="POST" class="settings-form">
+        <form method="POST" class="settings-form" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($auth->generateCsrfToken()); ?>">
             
             <div class="form-section">
                 <h3>Personal Information</h3>
+                
+                <div class="form-group">
+                    <label>Profile Picture</label>
+                    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.25rem;">
+                        <div style="width:56px;height:56px;border-radius:50%;overflow:hidden;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;border:2px solid var(--border-color);flex-shrink:0;">
+                            <?php if (!empty($profile['avatar_url'])): ?>
+                                <img src="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($profile['avatar_url']); ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+                            <?php else: ?>
+                                <span style="font-size:1.5rem;color:var(--text-muted);">👤</span>
+                            <?php endif; ?>
+                        </div>
+                        <div style="flex:1;">
+                            <input type="file" id="profile_picture" name="profile_picture" accept="image/png,image/jpeg,image/gif,image/webp" style="font-size:0.8rem;">
+                            <small style="color:var(--text-muted);display:block;margin-top:0.15rem;">Max 5MB. PNG, JPG, GIF, WebP.</small>
+                            <?php if (!empty($profile['avatar_url'])): ?>
+                            <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.75rem;margin-top:0.25rem;cursor:pointer;color:var(--danger);">
+                                <input type="checkbox" name="remove_picture" value="1"> Remove
+                            </label>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -208,28 +271,30 @@ include 'includes/header.php';
 }
 
 .form-section {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
 }
 
 .form-section h3 {
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--spacing-lg);
+    font-size: 0.95rem;
+    margin-bottom: var(--spacing-sm);
 }
 
 .divider {
     height: 1px;
     background-color: var(--border-color);
-    margin: var(--spacing-xl) 0;
+    margin: var(--spacing-sm) 0;
 }
 
 .form-actions {
     display: flex;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-lg);
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
 }
 
 .form-actions .btn {
     flex: 1;
+    height: 38px;
+    font-size: 0.875rem;
 }
 </style>
 

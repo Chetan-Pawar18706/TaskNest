@@ -187,6 +187,7 @@ body {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 0.4rem;
+    position: relative;
 }
 
 .calendar-day-name {
@@ -215,6 +216,15 @@ body {
     background: rgba(99, 102, 241, 0.12);
 }
 
+.calendar-cell.has-event {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.calendar-cell.has-event:hover {
+    background: rgba(99, 102, 241, 0.16);
+    cursor: pointer;
+}
+
 .calendar-cell.is-muted {
     opacity: 0.55;
 }
@@ -231,6 +241,53 @@ body {
     border-radius: 50%;
     background: var(--color-primary);
     margin-top: 0.25rem;
+}
+
+.calendar-tooltip {
+    display: none;
+    position: absolute;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    min-width: 160px;
+    max-width: 240px;
+    pointer-events: none;
+}
+
+.calendar-tooltip .tooltip-header {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+}
+
+.calendar-tooltip .tooltip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    padding: 0.2rem 0;
+}
+
+.calendar-tooltip .tooltip-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 0.3rem;
+}
+
+.calendar-tooltip .tooltip-desc {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    margin-top: 0.1rem;
 }
 
 .timeline-list,

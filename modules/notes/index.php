@@ -36,8 +36,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="notes-subtitle">Capture ideas, organize thoughts, and never lose information.</p>
         </div>
         <div class="notes-toolbar-actions">
-            <button class="btn btn-secondary" type="button" id="openNoteCategoryModal">Manage Categories</button>
-            <button class="btn btn-primary" type="button" id="openNoteModal">Add Note</button>
+            <a href="<?php echo SITE_URL; ?>/notes-categories.php" class="btn btn-secondary">Manage Categories</a>
+            <a href="<?php echo SITE_URL; ?>/notes-add.php" class="btn btn-primary">Add Note</a>
         </div>
     </div>
 
@@ -103,18 +103,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php if (!empty($note['category_name'])): ?>
                                 <span class="note-category-badge" style="background:<?php echo htmlspecialchars($note['category_color'] ?? '#6366f1'); ?>20;color:<?php echo htmlspecialchars($note['category_color'] ?? '#6366f1'); ?>"><?php echo htmlspecialchars($note['category_name']); ?></span>
                             <?php endif; ?>
+                            <?php if (!empty($note['file_path'])): ?>
+                                <a href="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($note['file_path']); ?>" target="_blank" style="color:var(--primary);text-decoration:underline;font-size:0.8rem;">📎 Attachment</a>
+                            <?php endif; ?>
                         </div>
                         <div class="note-card-actions">
-                            <button class="btn btn-secondary btn-sm" type="button" data-action="view" data-id="<?php echo (int) $note['id']; ?>">View</button>
-                            <button class="btn btn-secondary btn-sm" type="button" data-action="edit" data-id="<?php echo (int) $note['id']; ?>">Edit</button>
-                            <button class="btn btn-secondary btn-sm" type="button" data-action="pin" data-id="<?php echo (int) $note['id']; ?>"><?php echo $note['is_pinned'] ? 'Unpin' : 'Pin'; ?></button>
-                            <button class="btn btn-secondary btn-sm" type="button" data-action="archive" data-id="<?php echo (int) $note['id']; ?>"><?php echo $note['is_archived'] ? 'Unarchive' : 'Archive'; ?></button>
+                            <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/notes-edit.php?id=<?php echo (int) $note['id']; ?>">Edit</a>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="togglePinNote(<?php echo (int) $note['id']; ?>)"><?php echo $note['is_pinned'] ? 'Unpin' : 'Pin'; ?></button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="toggleArchiveNote(<?php echo (int) $note['id']; ?>)"><?php echo $note['is_archived'] ? 'Unarchive' : 'Archive'; ?></button>
                             <?php if ($filters['show_deleted']): ?>
-                                <button class="btn btn-secondary btn-sm" type="button" data-action="restore" data-id="<?php echo (int) $note['id']; ?>">Restore</button>
-                                <button class="btn btn-danger btn-sm" type="button" data-action="permanent_delete" data-id="<?php echo (int) $note['id']; ?>">Delete Forever</button>
+                                <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Forever', 'Permanently delete this note?', function(){ permanentDeleteNote(<?php echo (int) $note['id']; ?>); })">Delete Forever</button>
                             <?php else: ?>
-                                <button class="btn btn-secondary btn-sm" type="button" data-action="duplicate" data-id="<?php echo (int) $note['id']; ?>">Duplicate</button>
-                                <button class="btn btn-danger btn-sm" type="button" data-action="delete" data-id="<?php echo (int) $note['id']; ?>">Delete</button>
+                                <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Note', 'Are you sure?', function(){ deleteNote(<?php echo (int) $note['id']; ?>); })">Delete</button>
                             <?php endif; ?>
                         </div>
                     </article>
@@ -125,7 +125,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F4DD;</div>
                 <h3>No notes yet</h3>
                 <p>Create your first note to start capturing ideas.</p>
-                <button class="btn btn-primary" type="button" id="emptyStateAddNote">Add Note</button>
+                <a href="<?php echo SITE_URL; ?>/notes-add.php" class="btn btn-primary">Add Note</a>
             </div>
         <?php endif; ?>
     </div>
@@ -138,128 +138,5 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     <?php endif; ?>
 </div>
-
-<!-- Note Modal -->
-<div class="modal" id="noteModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="noteModal"></div>
-    <div class="modal-dialog modal-lg">
-        <div class="modal-header">
-            <h3 id="noteModalTitle">Add Note</h3>
-            <button class="modal-close" type="button" data-close-modal="noteModal">&times;</button>
-        </div>
-        <form id="noteForm" class="modal-body note-modal-body">
-            <input type="hidden" name="note_id" id="noteId">
-            <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-            <div class="form-group">
-                <label for="noteTitle">Title</label>
-                <input type="text" id="noteTitle" name="title" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="noteCategory">Category</label>
-                <select id="noteCategory" name="category_id" class="form-control"></select>
-            </div>
-            <div class="form-group">
-                <label>Content</label>
-                <div class="rich-text-toolbar" id="richTextToolbar">
-                    <button type="button" data-cmd="bold" title="Bold"><strong>B</strong></button>
-                    <button type="button" data-cmd="italic" title="Italic"><em>I</em></button>
-                    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
-                    <button type="button" data-cmd="insertUnorderedList" title="Bullet List">&#8226; List</button>
-                    <button type="button" data-cmd="insertOrderedList" title="Numbered List">1. List</button>
-                    <button type="button" data-cmd="formatBlock" data-val="h2" title="Heading">H2</button>
-                    <button type="button" data-cmd="formatBlock" data-val="h3" title="Subheading">H3</button>
-                    <button type="button" data-cmd="formatBlock" data-val="p" title="Paragraph">P</button>
-                </div>
-                <div class="note-editor" id="noteEditor" contenteditable="true"></div>
-                <input type="hidden" name="content" id="noteContent">
-            </div>
-            <div class="form-group">
-                <label>Images</label>
-                <input type="file" id="noteImageInput" accept="image/*" multiple style="display:none;">
-                <button type="button" class="btn btn-secondary btn-sm" id="addNoteImageBtn">Upload Image</button>
-                <div class="note-images-preview" id="noteImagesPreview"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="checkbox-inline"><input type="checkbox" name="is_pinned" id="noteIsPinned" value="1"> Pin this note</label>
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-inline"><input type="checkbox" name="is_archived" id="noteIsArchived" value="1"> Archive this note</label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="noteModal">Cancel</button>
-                <button class="btn btn-primary" type="submit">Save Note</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- View Note Modal -->
-<div class="modal" id="noteViewModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="noteViewModal"></div>
-    <div class="modal-dialog modal-lg">
-        <div class="modal-header">
-            <h3 id="noteViewTitle">View Note</h3>
-            <button class="modal-close" type="button" data-close-modal="noteViewModal">&times;</button>
-        </div>
-        <div class="modal-body note-modal-body">
-            <div id="noteViewContent" class="note-view-content"></div>
-            <div id="noteViewImages" class="note-images-preview" style="margin-top:1rem;"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Category Modal -->
-<div class="modal" id="noteCategoryModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="noteCategoryModal"></div>
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3>Manage Categories</h3>
-            <button class="modal-close" type="button" data-close-modal="noteCategoryModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="noteCategoryForm">
-                <input type="hidden" name="category_id" id="noteCategoryId">
-                <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
-                <div class="form-group">
-                    <label for="noteCategoryName">Name</label>
-                    <input type="text" id="noteCategoryName" name="name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="noteCategoryColor">Color</label>
-                    <input type="color" id="noteCategoryColor" name="color" class="form-control" value="#6366f1">
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-close-modal="noteCategoryModal">Cancel</button>
-                    <button class="btn btn-primary" type="submit">Save Category</button>
-                </div>
-            </form>
-            <div class="note-category-list" id="noteCategoryList"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Confirm Modal -->
-<div class="modal" id="noteConfirmModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal="noteConfirmModal"></div>
-    <div class="modal-dialog modal-sm">
-        <div class="modal-header">
-            <h3 id="noteConfirmTitle">Confirm</h3>
-            <button class="modal-close" type="button" data-close-modal="noteConfirmModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p id="noteConfirmBody">Are you sure?</p>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-close-modal="noteConfirmModal">Cancel</button>
-                <button class="btn btn-danger" type="button" id="noteConfirmActionBtn">Confirm</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    window.noteNestInitialFilters = <?php echo json_encode($filters, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-</script>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
