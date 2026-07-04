@@ -1,0 +1,46 @@
+# TaskNest - Security & Routing
+
+# Prevent directory browsing
+Options -Indexes
+
+# Protect config directory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^database/setup_admin\.php$ - [L]
+    RewriteRule ^database/ - [F,L]
+    RewriteRule ^logs/ - [F,L]
+</IfModule>
+
+# Prevent PHP execution in uploads directory
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.php$">
+        <IfModule !mod_access_compat.c>
+            Require all denied
+        </IfModule>
+    </FilesMatch>
+</IfModule>
+
+# Force HTTPS in production (uncomment when ready)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Disable server signature
+ServerSignature Off
+
+# PHP security settings
+<IfModule mod_php.c>
+    php_flag display_errors off
+    php_flag expose_php off
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    php_value max_execution_time 30
+</IfModule>

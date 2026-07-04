@@ -1,0 +1,114 @@
+.habits-page { padding: 0; }
+.habits-toolbar { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.habits-title { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+.habits-subtitle { color: var(--text-secondary); margin: 0.25rem 0 0; font-size: 0.9rem; }
+.habits-toolbar-actions { display: flex; gap: 0.5rem; }
+
+.habits-summary { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.habits-summary .summary-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem 1.5rem; display: flex; flex-direction: column; min-width: 120px; flex: 1; }
+.habits-summary .summary-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.habits-summary .summary-card strong { font-size: 1.5rem; color: var(--text-primary); margin-top: 0.25rem; }
+
+.habits-controls { margin-bottom: 1.5rem; }
+.habits-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+.habits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+
+.habit-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; transition: box-shadow 0.2s; }
+.habit-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.habit-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.habit-card h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+.habit-frequency { font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-secondary, #f1f5f9); padding: 0.15rem 0.5rem; border-radius: 999px; }
+
+.habit-streak { display: flex; gap: 0.25rem; margin-bottom: 0.75rem; }
+.habit-day { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; border: 2px solid var(--border-color); color: var(--text-secondary); transition: all 0.2s; cursor: pointer; }
+.habit-day.logged { background: var(--color-primary, #6366f1); color: #fff; border-color: var(--color-primary, #6366f1); }
+.habit-day.today { border-color: var(--color-primary, #6366f1); }
+.habit-day:hover { transform: scale(1.1); }
+
+.habit-meta { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.habit-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; border-top: 1px solid var(--border-color); padding-top: 0.75rem; }
+.habit-actions .btn { font-size: 0.75rem; padding: 0.3rem 0.6rem; }
+
+.habit-chart-panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; margin-top: 1.5rem; }
+.habit-chart-panel h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem; }
+
+.habits-page .empty-state { text-align: center; padding: 3rem 1rem; }
+.habits-page .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+
+@media (max-width: 768px) {
+    .habits-toolbar { flex-direction: column; }
+    .habits-filters { flex-direction: column; }
+    .habits-grid { grid-template-columns: 1fr; }
+}
+
+.habits-page .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.habits-page .modal.is-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.habits-page .modal-dialog {
+    position: relative;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 2;
+}
+
+.habits-page .modal-dialog.modal-lg {
+    max-width: 800px;
+}
+
+.habits-page .modal-dialog.modal-sm {
+    max-width: 360px;
+}
+
+.habits-page .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.habits-page .modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.habits-page .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.habits-page .modal-body {
+    padding: 1.25rem;
+}
+
+.habits-page .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+}

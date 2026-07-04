@@ -1,0 +1,75 @@
+# TaskNest - Git Ignore
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE & Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# PHP
+*.phar
+composer.phar
+
+# Logs
+logs/
+*.log
+
+# Uploads (user data)
+uploads/avatars/*
+!uploads/avatars/.gitkeep
+
+# Cache
+cache/
+.cache
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Database
+*.sql
+!database/tasknest.sql
+
+# Dependencies (if using Composer later)
+vendor/
+composer.lock
+
+# Testing
+.phpunit.result.cache
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+desktop.ini
+
+# Node (for future frontend tooling)
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build files
+dist/
+build/
+out/
+
+# Config overrides
+config/db.local.php
+
+# Private files
+*.key
+*.pem
+*.crt
