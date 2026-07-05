@@ -1,14 +1,14 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 requireLogin($auth);
 
 $user_id = $auth->getUserId();
-$page_title = 'Manage Document Categories';
-$additional_css = ['documents.css'];
+$page_title = 'Manage Note Categories';
+$additional_css = ['notes.css'];
 
-ensureDocumentTablesExist($mysqli);
+ensureNoteTablesExist($mysqli);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
@@ -22,10 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     switch ($action) {
         case 'save_category':
-            echo json_encode(saveDocumentCategoryHandler($mysqli, $user_id, $_POST));
+            echo json_encode(saveNoteCategoryHandler($mysqli, $user_id, $_POST));
             break;
         case 'delete_category':
-            echo json_encode(deleteDocumentCategoryHandler($mysqli, $user_id, $_POST));
+            echo json_encode(deleteNoteCategoryHandler($mysqli, $user_id, $_POST));
             break;
         default:
             echo json_encode(['success' => false, 'message' => 'Unknown action.']);
@@ -33,20 +33,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$categories = getDocumentCategories($mysqli, $user_id);
+$categories = getNoteCategories($mysqli, $user_id);
 $csrf_token = $auth->generateCsrfToken();
 
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 ?>
 
-<div class="documents-page">
-    <div class="docs-toolbar">
+<div class="notes-page">
+    <div class="notes-toolbar">
         <div>
-            <h1 class="docs-title">Manage Document Categories</h1>
-            <p class="docs-subtitle">Organize your documents with custom categories.</p>
+            <h1 class="notes-title">Manage Note Categories</h1>
+            <p class="notes-subtitle">Organize your notes with custom categories.</p>
         </div>
-        <div class="docs-toolbar-actions">
-            <a href="<?php echo SITE_URL; ?>/documents.php" class="btn btn-secondary">Back to Documents</a>
+        <div class="notes-toolbar-actions">
+            <a href="<?php echo SITE_URL; ?>/notes.php" class="btn btn-secondary">Back to Notes</a>
         </div>
     </div>
 
@@ -83,7 +83,7 @@ include __DIR__ . '/includes/header.php';
             <div id="categoryList">
                 <?php if (empty($categories)): ?>
                     <div class="empty-state-sm">
-                        <p>No categories yet. Create one to organize your documents.</p>
+                        <p>No categories yet. Create one to organize your notes.</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($categories as $cat): ?>
@@ -112,7 +112,7 @@ include __DIR__ . '/includes/header.php';
             <button class="modal-close" type="button" data-close-modal="deleteCategoryModal">&times;</button>
         </div>
         <div class="modal-body">
-            <p id="deleteCategoryMessage">Are you sure you want to delete this category? Documents in this category will become uncategorized.</p>
+            <p id="deleteCategoryMessage">Are you sure you want to delete this category? Notes in this category will become uncategorized.</p>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" data-close-modal="deleteCategoryModal">Cancel</button>
                 <button class="btn btn-danger" type="button" id="confirmDeleteCategoryBtn">Delete</button>
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         var formData = new FormData(form);
-        fetch('<?php echo SITE_URL; ?>/documents-categories.php', {
+        fetch('<?php echo SITE_URL; ?>/modules/notes/notes-categories.php', {
             method: 'POST',
             body: formData
         })
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             pendingDeleteId = btn.getAttribute('data-id');
             document.getElementById('deleteCategoryMessage').textContent =
-                'Are you sure you want to delete "' + btn.getAttribute('data-name') + '"? Documents in this category will become uncategorized.';
+                'Are you sure you want to delete "' + btn.getAttribute('data-name') + '"? Notes in this category will become uncategorized.';
             deleteModal.classList.add('active');
             deleteModal.setAttribute('aria-hidden', 'false');
         });
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fd.append('action', 'delete_category');
         fd.append('category_id', pendingDeleteId);
         fd.append('csrf_token', csrfToken);
-        fetch('<?php echo SITE_URL; ?>/documents-categories.php', {
+        fetch('<?php echo SITE_URL; ?>/modules/notes/notes-categories.php', {
             method: 'POST',
             body: fd
         })
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var item = categoryList.querySelector('[data-id="' + pendingDeleteId + '"]');
                 if (item) item.remove();
                 if (!categoryList.querySelector('.category-item')) {
-                    categoryList.innerHTML = '<div class="empty-state-sm"><p>No categories yet. Create one to organize your documents.</p></div>';
+                    categoryList.innerHTML = '<div class="empty-state-sm"><p>No categories yet. Create one to organize your notes.</p></div>';
                 }
                 if (categoryIdInput.value === pendingDeleteId) {
                     cancelBtn.click();
@@ -244,4 +244,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

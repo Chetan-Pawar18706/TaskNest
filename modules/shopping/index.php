@@ -26,7 +26,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="shopping-subtitle">Plan purchases and track spending.</p>
         </div>
         <div class="shopping-toolbar-actions">
-            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/shopping-categories.php">Manage Categories</a>
+            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/modules/shopping/shopping-categories.php">Manage Categories</a>
             <button class="btn btn-secondary" type="button" id="clearCompletedBtn">Clear Completed</button>
         </div>
     </div>
@@ -39,9 +39,15 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="summary-card"><span class="summary-label">Actual Spent</span><strong>$<?php echo number_format($shopStats['actual_total'], 2); ?></strong></div>
     </div>
 
-    <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/shopping-add.php" style="margin-bottom:1rem;display:inline-block;">Add Item</a>
+    <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/shopping/shopping-add.php" style="margin-bottom:1rem;display:inline-block;">Add Item</a>
 
     <div class="shopping-controls">
+        <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filters</span>
+        </button>
         <form class="shopping-filters" method="get">
             <input type="text" name="search" class="form-control" placeholder="Search..." value="<?php echo htmlspecialchars($filters['search']); ?>">
             <label class="checkbox-inline"><input type="checkbox" name="completed" value="1" <?php echo $filters['completed'] ? 'checked' : ''; ?>> Show Completed</label>
@@ -75,7 +81,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <?php endif; ?>
                     </div>
                     <div class="shopping-item-actions">
-                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href = siteUrl + '/shopping-edit.php?id=<?php echo (int) $item['id']; ?>'">Edit</button>
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href = siteUrl + '/modules/shopping/shopping-edit.php?id=<?php echo (int) $item['id']; ?>'">Edit</button>
                         <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Item', 'Are you sure you want to delete this item?', function() { deleteShoppingItem(<?php echo (int) $item['id']; ?>); })">Delete</button>
                     </div>
                 </div>
@@ -99,4 +105,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
 
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.querySelector('.shopping-filters');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+</script>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

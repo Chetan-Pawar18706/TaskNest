@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 requireLogin($auth);
 
@@ -32,13 +32,13 @@ $csrf_token = $auth->generateCsrfToken();
 
 $page_title = 'Manage Expense Categories';
 $additional_css = ['expenses.css'];
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="expenses-page">
     <div class="expenses-toolbar">
         <div>
-            <a href="expenses.php" class="btn btn-secondary btn-sm">&larr; Back to Expenses</a>
+            <a href="<?php echo SITE_URL; ?>/expenses.php" class="btn btn-secondary btn-sm">&larr; Back to Expenses</a>
         </div>
     </div>
 
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('category_id', catId);
                 formData.append('csrf_token', '<?php echo htmlspecialchars($csrf_token); ?>');
 
-                fetch('expenses-categories.php', { method: 'POST', body: formData })
+                fetch('<?php echo SITE_URL; ?>/modules/expenses/expenses-categories.php', { method: 'POST', body: formData })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.success) {
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         var formData = new FormData(form);
 
-        fetch('expenses-categories.php', { method: 'POST', body: formData })
+        fetch('<?php echo SITE_URL; ?>/modules/expenses/expenses-categories.php', { method: 'POST', body: formData })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.success) {
@@ -197,4 +197,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

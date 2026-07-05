@@ -42,8 +42,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="tasks-subtitle">Manage your work, priorities, and deadlines.</p>
         </div>
         <div class="tasks-toolbar-actions">
-            <a href="<?php echo SITE_URL; ?>/tasks-categories.php" class="btn btn-secondary">Manage Categories</a>
-            <a href="<?php echo SITE_URL; ?>/tasks-add.php" class="btn btn-primary">Add Task</a>
+            <a href="<?php echo SITE_URL; ?>/modules/tasks/tasks-categories.php" class="btn btn-secondary">Manage Categories</a>
+            <a href="<?php echo SITE_URL; ?>/modules/tasks/tasks-add.php" class="btn btn-primary">Add Task</a>
         </div>
     </div>
 
@@ -67,6 +67,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 
     <div class="tasks-controls">
+        <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filters</span>
+        </button>
         <form class="tasks-filters" id="tasksFilterForm" method="get">
             <input type="text" name="search" class="form-control" placeholder="Search tasks" value="<?php echo htmlspecialchars($filters['search']); ?>">
             <select name="status" class="form-control">
@@ -139,7 +145,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </div>
                                     <div class="task-meta"><?php echo htmlspecialchars($task['category_name'] ?? 'Uncategorized'); ?></div>
                                     <div class="task-actions-inline">
-                                        <a class="link-btn" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                        <a class="link-btn" href="<?php echo SITE_URL; ?>/modules/tasks/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
                                         <button class="link-btn" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
                                     </div>
                                 </div>
@@ -170,7 +176,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 <td><span class="status-badge status-<?php echo strtolower(str_replace(' ', '-', $task['status'] ?? 'pending')); ?>"><?php echo htmlspecialchars($task['status'] ?? 'Pending'); ?></span></td>
                                 <td><?php echo htmlspecialchars($task['due_date'] ?? '—'); ?></td>
                                 <td>
-                                    <a class="link-btn" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                    <a class="link-btn" href="<?php echo SITE_URL; ?>/modules/tasks/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
                                     <button class="link-btn" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
                                 </td>
                             </tr>
@@ -193,7 +199,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="task-meta"><a href="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($task['file_path']); ?>" target="_blank" style="color:var(--primary);text-decoration:underline;">📎 Attachment</a></div>
                             <?php endif; ?>
                             <div class="task-actions">
-                                <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/modules/tasks/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
                                 <button class="btn btn-secondary btn-sm" type="button" onclick="completeTask(<?php echo (int) $task['id']; ?>)">Complete</button>
                                 <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
                             </div>
@@ -217,7 +223,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="task-meta"><a href="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($task['file_path']); ?>" target="_blank" style="color:var(--primary);text-decoration:underline;">📎 Attachment</a></div>
                             <?php endif; ?>
                             <div class="task-actions">
-                                <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
+                                <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/modules/tasks/tasks-edit.php?id=<?php echo (int) $task['id']; ?>">Edit</a>
                                 <button class="btn btn-secondary btn-sm" type="button" onclick="completeTask(<?php echo (int) $task['id']; ?>)">Complete</button>
                                 <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Task', 'Are you sure?', function(){ deleteTask(<?php echo (int) $task['id']; ?>); })">Delete</button>
                             </div>
@@ -230,7 +236,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">✓</div>
                 <h3>No tasks yet</h3>
                 <p>Create your first task to start organizing work.</p>
-                <a href="<?php echo SITE_URL; ?>/tasks-add.php" class="btn btn-primary">Add Task</a>
+                <a href="<?php echo SITE_URL; ?>/modules/tasks/tasks-add.php" class="btn btn-primary">Add Task</a>
             </div>
         <?php endif; ?>
     </div>
@@ -243,5 +249,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.getElementById('tasksFilterForm');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+</script>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

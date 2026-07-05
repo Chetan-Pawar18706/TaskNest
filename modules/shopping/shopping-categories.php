@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 requireLogin($auth);
 
 $user_id = $auth->getUserId();
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $categories = getShoppingCategories($mysqli, $user_id);
 $csrf_token = $auth->generateCsrfToken();
 
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="shopping-page">
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         var formData = new FormData(form);
-        fetch('<?php echo SITE_URL; ?>/shopping-categories.php', { method: 'POST', body: formData })
+        fetch('<?php echo SITE_URL; ?>/modules/shopping/shopping-categories.php', { method: 'POST', body: formData })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.success) {
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fd.append('action', 'delete_category');
         fd.append('category_id', pendingDeleteId);
         fd.append('csrf_token', csrfToken);
-        fetch('<?php echo SITE_URL; ?>/shopping-categories.php', { method: 'POST', body: fd })
+        fetch('<?php echo SITE_URL; ?>/modules/shopping/shopping-categories.php', { method: 'POST', body: fd })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 deleteModal.classList.remove('active');
@@ -228,4 +228,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

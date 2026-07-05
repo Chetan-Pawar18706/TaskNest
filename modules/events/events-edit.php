@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 requireLogin($auth);
 
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $page_title = 'Edit Event';
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="settings-container" style="max-width:600px;margin:0 auto;">
@@ -60,7 +60,7 @@ include __DIR__ . '/includes/header.php';
             </div>
         <?php endif; ?>
 
-        <form method="post" action="<?php echo SITE_URL; ?>/events-edit.php?id=<?php echo $event_id; ?>">
+        <form method="post" action="<?php echo SITE_URL; ?>/modules/events/events-edit.php?id=<?php echo $event_id; ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
 
             <div class="form-group">
@@ -87,4 +87,4 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

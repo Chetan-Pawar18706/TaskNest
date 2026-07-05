@@ -35,6 +35,15 @@
             });
         }
         
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && (!toggle || !toggle.contains(e.target))) {
+                    closeSidebar();
+                }
+            }
+        });
+        
         setupNavLinks(sidebar);
         handleWindowResize();
     }
@@ -98,7 +107,7 @@
             const sidebar = document.querySelector('.sidebar');
             if (!sidebar) return;
             
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth > 768) {
                 sidebar.classList.remove('active');
                 document.body.classList.remove('sidebar-open');
             }

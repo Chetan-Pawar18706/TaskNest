@@ -1,33 +1,18 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 requireLogin($auth);
 
 $user_id = $auth->getUserId();
 ensureBorrowTablesExist($mysqli);
 
-$borrow_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
-if ($borrow_id <= 0) {
-    redirect(SITE_URL . '/borrow.php');
-}
-
-$stmt = safePrepare($mysqli, 'SELECT * FROM borrow_items WHERE id = ? AND user_id = ? AND is_deleted = 0');
-$stmt->bind_param('ii', $borrow_id, $user_id);
-$stmt->execute();
-$record = $stmt->get_result()->fetch_assoc();
-
-if (!$record) {
-    $_SESSION['flash_error'] = 'Record not found.';
-    redirect(SITE_URL . '/borrow.php');
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!$auth->verifyCsrfToken($csrf)) {
         $_SESSION['flash_error'] = 'Invalid CSRF token. Please try again.';
-        redirect(SITE_URL . '/borrow-edit.php?id=' . $borrow_id);
+        redirect(SITE_URL . '/modules/borrow/borrow-add.php');
     }
 
     $result = saveBorrowHandler($mysqli, $user_id, $_POST);
@@ -36,26 +21,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(SITE_URL . '/borrow.php');
     } else {
         $_SESSION['flash_error'] = $result['message'];
-        redirect(SITE_URL . '/borrow-edit.php?id=' . $borrow_id);
+        redirect(SITE_URL . '/modules/borrow/borrow-add.php');
     }
 }
 
-$page_title = 'Edit Borrow/Lend';
+$page_title = 'Add Borrow/Lend';
 $additional_css = ['borrow.css'];
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 
 $flash_error = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_error']);
 
-$title = $_POST['title'] ?? $record['title'];
-$description = $_POST['description'] ?? $record['description'];
-$type = $_POST['type'] ?? $record['type'];
-$item_type = $_POST['item_type'] ?? $record['item_type'];
-$amount = $_POST['amount'] ?? $record['amount'];
-$person_name = $_POST['person_name'] ?? $record['person_name'];
-$person_contact = $_POST['person_contact'] ?? $record['person_contact'];
-$borrow_date = $_POST['borrow_date'] ?? $record['borrow_date'];
-$return_date = $_POST['return_date'] ?? ($record['return_date'] ?? '');
+$title = $_POST['title'] ?? '';
+$description = $_POST['description'] ?? '';
+$type = $_POST['type'] ?? 'borrowed';
+$item_type = $_POST['item_type'] ?? 'money';
+$amount = $_POST['amount'] ?? '';
+$person_name = $_POST['person_name'] ?? '';
+$person_contact = $_POST['person_contact'] ?? '';
+$borrow_date = $_POST['borrow_date'] ?? date('Y-m-d');
+$return_date = $_POST['return_date'] ?? '';
 ?>
 
 <div class="borrow-page">
@@ -64,8 +49,8 @@ $return_date = $_POST['return_date'] ?? ($record['return_date'] ?? '');
             <a href="<?php echo SITE_URL; ?>/borrow.php" class="btn btn-secondary">&larr; Back to Borrow & Lend</a>
         </div>
         <div>
-            <h1 class="borrow-title">Edit Borrow/Lend Record</h1>
-            <p class="borrow-subtitle">Update record details.</p>
+            <h1 class="borrow-title">Add Borrow/Lend Record</h1>
+            <p class="borrow-subtitle">Track a new borrow or lend transaction.</p>
         </div>
     </div>
 
@@ -76,10 +61,9 @@ $return_date = $_POST['return_date'] ?? ($record['return_date'] ?? '');
     <?php endif; ?>
 
     <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow-sm);max-width:720px;">
-        <form method="post" action="<?php echo SITE_URL; ?>/borrow-edit.php?id=<?php echo $borrow_id; ?>">
+        <form method="post" action="<?php echo SITE_URL; ?>/modules/borrow/borrow-add.php">
             <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
             <input type="hidden" name="action" value="save_borrow">
-            <input type="hidden" name="borrow_id" value="<?php echo $borrow_id; ?>">
 
             <div class="form-group">
                 <label for="title">Title <span style="color:#dc2626;">*</span></label>
@@ -147,11 +131,11 @@ $return_date = $_POST['return_date'] ?? ($record['return_date'] ?? '');
             </div>
 
             <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-primary">Create Record</button>
                 <a href="<?php echo SITE_URL; ?>/borrow.php" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

@@ -42,8 +42,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="export-actions">
                 <a href="expenses.php?action=export_csv&date_from=<?php echo htmlspecialchars($filters['date_from']); ?>&date_to=<?php echo htmlspecialchars($filters['date_to']); ?>" class="btn btn-secondary">Export CSV</a>
             </div>
-            <a href="<?php echo SITE_URL; ?>/expenses-categories.php" class="btn btn-secondary">Manage Categories</a>
-            <a href="<?php echo SITE_URL; ?>/expenses-add.php" class="btn btn-primary">Add Transaction</a>
+            <a href="<?php echo SITE_URL; ?>/modules/expenses/expenses-categories.php" class="btn btn-secondary">Manage Categories</a>
+            <a href="<?php echo SITE_URL; ?>/modules/expenses/expenses-add.php" class="btn btn-primary">Add Transaction</a>
         </div>
     </div>
 
@@ -75,6 +75,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <!-- Transactions Tab -->
     <div class="tab-content active" id="tab-transactions">
         <div class="expenses-controls">
+            <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>Filters</span>
+            </button>
             <form class="expenses-filters" id="expensesFilterForm" method="get">
                 <input type="hidden" name="tab" value="transactions">
                 <input type="text" name="search" class="form-control" placeholder="Search..." value="<?php echo htmlspecialchars($filters['search']); ?>">
@@ -116,7 +122,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="transaction-date"><?php echo htmlspecialchars($exp['transaction_date']); ?></div>
                         </div>
                         <div class="transaction-actions">
-                            <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/expenses-edit.php?id=<?php echo (int) $exp['id']; ?>">Edit</a>
+                            <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/modules/expenses/expenses-edit.php?id=<?php echo (int) $exp['id']; ?>">Edit</a>
                             <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Transaction', 'Are you sure?', function(){ deleteExpense(<?php echo (int) $exp['id']; ?>); })">Delete</button>
                         </div>
                     </div>
@@ -126,7 +132,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="empty-state-icon">&#x1F4B0;</div>
                     <h3>No transactions yet</h3>
                     <p>Record your first income or expense.</p>
-                    <a href="<?php echo SITE_URL; ?>/expenses-add.php" class="btn btn-primary">Add Transaction</a>
+                    <a href="<?php echo SITE_URL; ?>/modules/expenses/expenses-add.php" class="btn btn-primary">Add Transaction</a>
                 </div>
             <?php endif; ?>
         </div>
@@ -167,4 +173,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.getElementById('expensesFilterForm');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+</script>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

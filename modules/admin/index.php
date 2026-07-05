@@ -210,7 +210,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     tabs.forEach(function(tab) {
         tab.addEventListener('click', function() {
             var tabName = tab.getAttribute('data-tab');
-            window.location.href = 'admin.php?tab=' + tabName;
+            window.location.href = 'modules/admin/admin.php?tab=' + tabName;
         });
     });
 
@@ -220,7 +220,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     document.querySelectorAll('[data-action="toggle_user"]').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var p = new FormData(); p.append('action', 'toggle_user'); p.append('user_id', btn.getAttribute('data-id')); p.append('csrf_token', getCsrfToken());
-            fetch('admin.php', { method: 'POST', body: p }).then(function(r){return r.json();}).then(function(r){
+            fetch('modules/admin/admin.php', { method: 'POST', body: p }).then(function(r){return r.json();}).then(function(r){
                 if (r.success) { showToast(r.message, 'success'); window.location.reload(); } else showToast(r.message || 'Failed.', 'error');
             });
         });
@@ -237,7 +237,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             p.append('reply', replyInput.value);
             p.append('status', statusSelect.value);
             p.append('csrf_token', getCsrfToken());
-            fetch('admin.php', { method: 'POST', body: p }).then(function(r){return r.json();}).then(function(r){
+            fetch('modules/admin/admin.php', { method: 'POST', body: p }).then(function(r){return r.json();}).then(function(r){
                 if (r.success) { showToast(r.message, 'success'); window.location.reload(); } else showToast(r.message || 'Failed.', 'error');
             });
         });
@@ -248,7 +248,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         e.preventDefault();
         var p = new FormData(settingsForm);
         p.append('csrf_token', getCsrfToken());
-        fetch('admin.php', { method: 'POST', body: p }).then(function(r){return r.json();}).then(function(r){
+        fetch('modules/admin/admin.php', { method: 'POST', body: p }).then(function(r){return r.json();}).then(function(r){
             if (r.success) showToast(r.message, 'success'); else showToast(r.message || 'Failed.', 'error');
         });
     });

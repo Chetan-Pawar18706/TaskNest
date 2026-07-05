@@ -34,7 +34,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="borrow-subtitle">Track items and money you've borrowed or lent to others.</p>
         </div>
         <div class="borrow-toolbar-actions">
-            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/borrow-add.php">Add Record</a>
+            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/borrow/borrow-add.php">Add Record</a>
         </div>
     </div>
 
@@ -66,6 +66,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 
     <div class="borrow-controls">
+        <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filters</span>
+        </button>
         <form class="borrow-filters" id="borrowFilterForm" method="get">
             <input type="text" name="search" class="form-control" placeholder="Search..." value="<?php echo htmlspecialchars($filters['search']); ?>">
             <select name="type" class="form-control">
@@ -138,7 +144,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="borrow-overdue-warning">&#x26A0; Overdue - return date was <?php echo htmlspecialchars($item['return_date']); ?></div>
                     <?php endif; ?>
                     <div class="borrow-card-actions">
-                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/borrow-edit.php?id=<?php echo (int) $item['id']; ?>'">Edit</button>
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/modules/borrow/borrow-edit.php?id=<?php echo (int) $item['id']; ?>'">Edit</button>
                         <?php if ($item['status'] !== 'returned'): ?>
                             <button class="btn btn-secondary btn-sm" type="button" onclick="markReturned(<?php echo (int) $item['id']; ?>)">Mark Returned</button>
                         <?php endif; ?>
@@ -151,7 +157,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F4B5;</div>
                 <h3>No records yet</h3>
                 <p>Start tracking borrowed or lent items.</p>
-                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/borrow-add.php">Add Record</a>
+                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/borrow/borrow-add.php">Add Record</a>
             </div>
         <?php endif; ?>
     </div>
@@ -166,5 +172,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.getElementById('borrowFilterForm');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+</script>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

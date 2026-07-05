@@ -1,33 +1,18 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 requireLogin($auth);
 
 $user_id = $auth->getUserId();
 ensureHabitGoalShoppingTablesExist($mysqli);
 
-$item_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
-if ($item_id <= 0) {
-    redirect(SITE_URL . '/shopping.php');
-}
-
-$stmt = safePrepare($mysqli, 'SELECT * FROM shopping WHERE id = ? AND user_id = ? AND is_deleted = 0');
-$stmt->bind_param('ii', $item_id, $user_id);
-$stmt->execute();
-$item = $stmt->get_result()->fetch_assoc();
-
-if (!$item) {
-    $_SESSION['flash_error'] = 'Item not found.';
-    redirect(SITE_URL . '/shopping.php');
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!$auth->verifyCsrfToken($csrf)) {
         $_SESSION['flash_error'] = 'Invalid CSRF token. Please try again.';
-        redirect(SITE_URL . '/shopping-edit.php?id=' . $item_id);
+        redirect(SITE_URL . '/modules/shopping/shopping-add.php');
     }
 
     $result = saveShoppingHandler($mysqli, $user_id, $_POST);
@@ -36,23 +21,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(SITE_URL . '/shopping.php');
     } else {
         $_SESSION['flash_error'] = $result['message'];
-        redirect(SITE_URL . '/shopping-edit.php?id=' . $item_id);
+        redirect(SITE_URL . '/modules/shopping/shopping-add.php');
     }
 }
 
-$page_title = 'Edit Shopping Item';
+$page_title = 'Add Shopping Item';
 $additional_css = ['shopping.css'];
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 
 $flash_error = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_error']);
 
-$name = $_POST['name'] ?? $item['name'];
-$quantity = $_POST['quantity'] ?? $item['quantity'];
-$estimated_price = $_POST['estimated_price'] ?? $item['estimated_price'];
-$actual_price = $_POST['actual_price'] ?? $item['actual_price'];
-$categoryId = $_POST['category_id'] ?? $item['category'];
-$notes = $_POST['notes'] ?? ($item['notes'] ?? '');
+$name = $_POST['name'] ?? '';
+$quantity = $_POST['quantity'] ?? '1';
+$estimated_price = $_POST['estimated_price'] ?? '';
+$actual_price = $_POST['actual_price'] ?? '';
+$categoryId = $_POST['category_id'] ?? '';
+$notes = $_POST['notes'] ?? '';
 
 $shoppingCategories = getShoppingCategories($mysqli, $user_id);
 ?>
@@ -63,8 +48,8 @@ $shoppingCategories = getShoppingCategories($mysqli, $user_id);
             <a href="<?php echo SITE_URL; ?>/shopping.php" class="btn btn-secondary">&larr; Back to Shopping</a>
         </div>
         <div>
-            <h1 class="shopping-title">Edit Shopping Item</h1>
-            <p class="shopping-subtitle">Update item details.</p>
+            <h1 class="shopping-title">Add Shopping Item</h1>
+            <p class="shopping-subtitle">Add a new item to your shopping list.</p>
         </div>
     </div>
 
@@ -75,10 +60,9 @@ $shoppingCategories = getShoppingCategories($mysqli, $user_id);
     <?php endif; ?>
 
     <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow-sm);max-width:720px;">
-        <form method="post" action="<?php echo SITE_URL; ?>/shopping-edit.php?id=<?php echo $item_id; ?>">
+        <form method="post" action="<?php echo SITE_URL; ?>/modules/shopping/shopping-add.php">
             <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
             <input type="hidden" name="action" value="save_item">
-            <input type="hidden" name="item_id" value="<?php echo $item_id; ?>">
 
             <div class="form-group">
                 <label for="name">Name <span style="color:#dc2626;">*</span></label>
@@ -120,11 +104,11 @@ $shoppingCategories = getShoppingCategories($mysqli, $user_id);
             </div>
 
             <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-primary">Add Item</button>
                 <a href="<?php echo SITE_URL; ?>/shopping.php" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

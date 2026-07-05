@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 requireLogin($auth);
 
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!$auth->verifyCsrfToken($csrf)) {
         $_SESSION['flash_error'] = 'Invalid CSRF token. Please try again.';
-        redirect(SITE_URL . '/goals-edit.php?id=' . $goal_id);
+        redirect(SITE_URL . '/modules/goals/goals-edit.php?id=' . $goal_id);
     }
 
     $result = saveGoalHandler($mysqli, $user_id, $_POST);
@@ -36,13 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(SITE_URL . '/goals.php');
     } else {
         $_SESSION['flash_error'] = $result['message'];
-        redirect(SITE_URL . '/goals-edit.php?id=' . $goal_id);
+        redirect(SITE_URL . '/modules/goals/goals-edit.php?id=' . $goal_id);
     }
 }
 
 $page_title = 'Edit Goal';
 $additional_css = ['goals.css'];
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 
 $flash_error = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_error']);
@@ -77,7 +77,7 @@ $goalCategories = getGoalCategories($mysqli, $user_id);
     <?php endif; ?>
 
     <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow-sm);max-width:720px;">
-        <form method="post" action="<?php echo SITE_URL; ?>/goals-edit.php?id=<?php echo $goal_id; ?>">
+        <form method="post" action="<?php echo SITE_URL; ?>/modules/goals/goals-edit.php?id=<?php echo $goal_id; ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
             <input type="hidden" name="action" value="save_goal">
             <input type="hidden" name="goal_id" value="<?php echo $goal_id; ?>">
@@ -139,4 +139,4 @@ $goalCategories = getGoalCategories($mysqli, $user_id);
     </div>
 </div>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

@@ -36,8 +36,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="notes-subtitle">Capture ideas, organize thoughts, and never lose information.</p>
         </div>
         <div class="notes-toolbar-actions">
-            <a href="<?php echo SITE_URL; ?>/notes-categories.php" class="btn btn-secondary">Manage Categories</a>
-            <a href="<?php echo SITE_URL; ?>/notes-add.php" class="btn btn-primary">Add Note</a>
+            <a href="<?php echo SITE_URL; ?>/modules/notes/notes-categories.php" class="btn btn-secondary">Manage Categories</a>
+            <a href="<?php echo SITE_URL; ?>/modules/notes/notes-add.php" class="btn btn-primary">Add Note</a>
         </div>
     </div>
 
@@ -61,6 +61,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 
     <div class="notes-controls">
+        <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filters</span>
+        </button>
         <form class="notes-filters" id="notesFilterForm" method="get">
             <input type="text" name="search" class="form-control" placeholder="Search notes..." value="<?php echo htmlspecialchars($filters['search']); ?>">
             <select name="category" class="form-control">
@@ -108,7 +114,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php endif; ?>
                         </div>
                         <div class="note-card-actions">
-                            <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/notes-edit.php?id=<?php echo (int) $note['id']; ?>">Edit</a>
+                            <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/modules/notes/notes-edit.php?id=<?php echo (int) $note['id']; ?>">Edit</a>
                             <button class="btn btn-secondary btn-sm" type="button" onclick="togglePinNote(<?php echo (int) $note['id']; ?>)"><?php echo $note['is_pinned'] ? 'Unpin' : 'Pin'; ?></button>
                             <button class="btn btn-secondary btn-sm" type="button" onclick="toggleArchiveNote(<?php echo (int) $note['id']; ?>)"><?php echo $note['is_archived'] ? 'Unarchive' : 'Archive'; ?></button>
                             <?php if ($filters['show_deleted']): ?>
@@ -125,7 +131,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F4DD;</div>
                 <h3>No notes yet</h3>
                 <p>Create your first note to start capturing ideas.</p>
-                <a href="<?php echo SITE_URL; ?>/notes-add.php" class="btn btn-primary">Add Note</a>
+                <a href="<?php echo SITE_URL; ?>/modules/notes/notes-add.php" class="btn btn-primary">Add Note</a>
             </div>
         <?php endif; ?>
     </div>
@@ -139,4 +145,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php endif; ?>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.getElementById('notesFilterForm');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+</script>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

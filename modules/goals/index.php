@@ -26,8 +26,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="goals-subtitle">Set targets and track your progress.</p>
         </div>
         <div class="goals-toolbar-actions">
-            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/goal-categories.php">Manage Categories</a>
-            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/goals-add.php">Add Goal</a>
+            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/modules/goals/goal-categories.php">Manage Categories</a>
+            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/goals/goals-add.php">Add Goal</a>
         </div>
     </div>
 
@@ -39,6 +39,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 
     <div class="goals-controls">
+        <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filters</span>
+        </button>
         <form class="goals-filters" method="get">
             <input type="text" name="search" class="form-control" placeholder="Search goals..." value="<?php echo htmlspecialchars($filters['search']); ?>">
             <select name="status" class="form-control">
@@ -78,7 +84,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="goal-actions">
                         <?php if ($goal['status'] === 'active'): ?>
                             <button class="btn btn-secondary btn-sm" type="button" onclick="updateGoalProgress(<?php echo (int) $goal['id']; ?>)">Update Progress</button>
-                            <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/goals-edit.php?id=<?php echo (int) $goal['id']; ?>'">Edit</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/modules/goals/goals-edit.php?id=<?php echo (int) $goal['id']; ?>'">Edit</button>
                         <?php endif; ?>
                         <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Goal', 'Are you sure?', function(){ deleteGoal(<?php echo (int) $goal['id']; ?>); })">Delete</button>
                     </div>
@@ -89,11 +95,23 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F3AF;</div>
                 <h3>No goals yet</h3>
                 <p>Set your first goal and start tracking progress.</p>
-                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/goals-add.php">Add Goal</a>
+                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/goals/goals-add.php">Add Goal</a>
             </div>
         <?php endif; ?>
     </div>
 </div>
 
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.querySelector('.goals-filters');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+</script>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

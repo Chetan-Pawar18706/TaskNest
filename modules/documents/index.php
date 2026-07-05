@@ -36,8 +36,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="docs-subtitle">Securely store, organize, and manage your important documents.</p>
         </div>
         <div class="docs-toolbar-actions">
-            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/documents-categories.php">Manage Categories</a>
-            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/documents-upload.php">Upload Document</a>
+            <a class="btn btn-secondary" href="<?php echo SITE_URL; ?>/modules/documents/documents-categories.php">Manage Categories</a>
+            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/documents/documents-upload.php">Upload Document</a>
         </div>
     </div>
 
@@ -61,6 +61,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 
     <div class="docs-controls">
+        <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filters</span>
+        </button>
         <form class="docs-filters" id="docsFilterForm" method="get">
             <input type="text" name="search" class="form-control" placeholder="Search documents..." value="<?php echo htmlspecialchars($filters['search']); ?>">
             <select name="category" class="form-control">
@@ -111,7 +117,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="doc-card-actions">
                             <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/uploads/documents/<?php echo htmlspecialchars($doc['filename']); ?>" target="_blank">Preview</a>
                             <a class="btn btn-secondary btn-sm" href="<?php echo SITE_URL; ?>/uploads/documents/<?php echo htmlspecialchars($doc['filename']); ?>" download="<?php echo htmlspecialchars($doc['original_name']); ?>">Download</a>
-                            <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/documents-edit.php?id=<?php echo (int) $doc['id']; ?>'">Edit</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/modules/documents/documents-edit.php?id=<?php echo (int) $doc['id']; ?>'">Edit</button>
                             <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Document', 'Are you sure you want to delete this document?', function(){ deleteDocument(<?php echo (int) $doc['id']; ?>); })">Delete</button>
                         </div>
                     </article>
@@ -122,7 +128,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F4C1;</div>
                 <h3>No documents yet</h3>
                 <p>Upload your first document to keep it safe and organized.</p>
-                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/documents-upload.php">Upload Document</a>
+                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/documents/documents-upload.php">Upload Document</a>
             </div>
         <?php endif; ?>
     </div>
@@ -137,5 +143,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.getElementById('docsFilterForm');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+</script>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

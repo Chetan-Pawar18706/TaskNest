@@ -289,18 +289,23 @@
     width: 20px;
     height: 20px;
     stroke-width: 2;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle.rotating .icon {
+    transform: rotate(360deg);
 }
 
 .moon-icon {
-    display: none !important;
+    display: none;
 }
 
 body[data-theme="dark"] .sun-icon {
-    display: none !important;
+    display: none;
 }
 
 body[data-theme="dark"] .moon-icon {
-    display: block !important;
+    display: block;
 }
 
 .navbar-icon-btn .icon {

@@ -39,6 +39,37 @@ include 'includes/header.php';
         </div>
     </section>
 
+    <section class="quick-actions-section">
+        <h2 class="dashboard-panel-title">Quick Actions</h2>
+        <p class="dashboard-panel-subtitle">Jump straight into your next step.</p>
+        <div class="quick-action-grid" style="margin-top: 1rem;">
+            <a href="<?php echo SITE_URL; ?>/modules/tasks/tasks-add.php" class="quick-action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                <strong>New Task</strong><span>Create a task</span>
+            </a>
+            <a href="<?php echo SITE_URL; ?>/modules/notes/notes-add.php" class="quick-action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="18" y2="16"></line></svg>
+                <strong>New Note</strong><span>Capture an idea</span>
+            </a>
+            <a href="<?php echo SITE_URL; ?>/modules/expenses/expenses-add.php" class="quick-action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6"></path><path d="M4.22 4.22l4.24 4.24m2.98 2.98l4.24 4.24"></path><path d="M1 12h6m6 0h6"></path><path d="M4.22 19.78l4.24-4.24m2.98-2.98l4.24-4.24"></path><path d="M19.78 19.78l-4.24-4.24m-2.98-2.98l-4.24-4.24"></path><path d="M19.78 4.22l-4.24 4.24m-2.98 2.98l-4.24 4.24"></path></svg>
+                <strong>Add Expense</strong><span>Track spending</span>
+            </a>
+            <a href="<?php echo SITE_URL; ?>/modules/documents/documents-upload.php" class="quick-action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                <strong>Upload Document</strong><span>Store a file</span>
+            </a>
+            <a href="<?php echo SITE_URL; ?>/modules/habits/habits-add.php" class="quick-action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                <strong>Add Habit</strong><span>Build a streak</span>
+            </a>
+            <a href="<?php echo SITE_URL; ?>/modules/goals/goals-add.php" class="quick-action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg>
+                <strong>Add Goal</strong><span>Set a target</span>
+            </a>
+        </div>
+    </section>
+
     <section class="dashboard-grid">
         <div class="dashboard-panel dashboard-panel--wide">
             <h2 class="dashboard-panel-title">Overview</h2>
@@ -134,7 +165,7 @@ include 'includes/header.php';
                     <h2 class="dashboard-panel-title">Calendar</h2>
                     <p class="dashboard-panel-subtitle">Upcoming plans and events.</p>
                 </div>
-                <a href="<?php echo SITE_URL; ?>/events-add.php" class="btn btn-secondary btn-sm" style="font-size:0.8rem;height:30px;">+ Add Event</a>
+                <a href="<?php echo SITE_URL; ?>/modules/events/events-add.php" class="btn btn-secondary btn-sm" style="font-size:0.8rem;height:30px;">+ Add Event</a>
             </div>
             <div id="dashboardCalendar" data-month-label="<?php echo date('F Y'); ?>" data-events="<?php echo htmlspecialchars(json_encode($allCalendarEvents)); ?>"></div>
             <div class="timeline-meta" style="margin-top: 0.7rem;"><?php echo count($calendarEvents) > 0 ? count($calendarEvents) . ' scheduled event(s) this month' : 'No events yet'; ?></div>
@@ -197,23 +228,6 @@ include 'includes/header.php';
                     <span>We will surface important deadlines here.</span>
                 </div>
             <?php endif; ?>
-        </div>
-
-        <div class="dashboard-panel dashboard-panel--single">
-            <div class="dashboard-panel-header">
-                <div>
-                    <h2 class="dashboard-panel-title">Quick Actions</h2>
-                    <p class="dashboard-panel-subtitle">Jump straight into your next step.</p>
-                </div>
-            </div>
-            <div class="quick-action-grid">
-                <button class="quick-action-btn" type="button" data-modal-action="task" data-modal-title="New Task" data-modal-message="Task creation will be available in the next module step."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg><strong>New Task</strong><span>Create a task</span></button>
-                <button class="quick-action-btn" type="button" data-modal-action="note" data-modal-title="New Note" data-modal-message="Note creation will be available in the next module step."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="18" y2="16"></line></svg><strong>New Note</strong><span>Capture an idea</span></button>
-                <button class="quick-action-btn" type="button" data-modal-action="expense" data-modal-title="Add Expense" data-modal-message="Expense entry will be available in the next module step."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6"></path><path d="M4.22 4.22l4.24 4.24m2.98 2.98l4.24 4.24"></path><path d="M1 12h6m6 0h6"></path><path d="M4.22 19.78l4.24-4.24m2.98-2.98l4.24-4.24"></path><path d="M19.78 19.78l-4.24-4.24m-2.98-2.98l-4.24-4.24"></path><path d="M19.78 4.22l-4.24 4.24m-2.98 2.98l-4.24 4.24"></path></svg><strong>Add Expense</strong><span>Track spending</span></button>
-                <button class="quick-action-btn" type="button" data-modal-action="document" data-modal-title="Upload Document" data-modal-message="Document upload will be available in the next module step."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg><strong>Upload Document</strong><span>Store a file</span></button>
-                <button class="quick-action-btn" type="button" data-modal-action="habit" data-modal-title="Add Habit" data-modal-message="Habit creation will be available in the next module step."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg><strong>Add Habit</strong><span>Build a streak</span></button>
-                <button class="quick-action-btn" type="button" data-modal-action="goal" data-modal-title="Add Goal" data-modal-message="Goal creation will be available in the next module step."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg><strong>Add Goal</strong><span>Set a target</span></button>
-            </div>
         </div>
     </section>
 </div>

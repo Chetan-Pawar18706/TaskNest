@@ -164,8 +164,8 @@ $navClass = function ($page) use ($current_page) {
                 <h3 class="nav-section-title">Admin</h3>
             </button>
             <ul class="nav-menu">
-                <li class="nav-item <?php echo $navClass('admin.php'); ?>">
-                    <a href="<?php echo SITE_URL; ?>/admin.php" class="nav-link">
+                <li class="nav-item <?php echo $navClass('admin-root.php'); ?>">
+                    <a href="<?php echo SITE_URL; ?>/modules/admin/admin-root.php" class="nav-link">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 2 3 6v6c0 5 3.5 8.5 9 10 5.5-1.5 9-5 9-10V6l-9-4Z"></path>
                             <path d="M9 12l2 2 4-4"></path>

@@ -22,7 +22,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <p class="habits-subtitle">Build streaks and track your daily consistency.</p>
         </div>
         <div class="habits-toolbar-actions">
-            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/habits-add.php">Add Habit</a>
+            <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/habits/habits-add.php">Add Habit</a>
         </div>
     </div>
 
@@ -67,7 +67,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="habit-meta">Logged <?php echo (int) $habit['logged_today']; ?>x today &middot; <?php echo (int) $habit['logged_week']; ?>x this week</div>
                     <div class="habit-actions">
                         <button class="btn btn-secondary btn-sm" type="button" onclick="logHabit(<?php echo (int) $habit['id']; ?>)">Log Today</button>
-                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/habits-edit.php?id=<?php echo (int) $habit['id']; ?>'">Edit</button>
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="window.location.href='<?php echo SITE_URL; ?>/modules/habits/habits-edit.php?id=<?php echo (int) $habit['id']; ?>'">Edit</button>
                         <button class="btn btn-danger btn-sm" type="button" onclick="ConfirmModal.show('Delete Habit', 'Are you sure?', function(){ deleteHabit(<?php echo (int) $habit['id']; ?>); })">Delete</button>
                     </div>
                 </div>
@@ -77,7 +77,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="empty-state-icon">&#x1F3AF;</div>
                 <h3>No habits yet</h3>
                 <p>Create your first habit to start building streaks.</p>
-                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/habits-add.php">Add Habit</a>
+                <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/modules/habits/habits-add.php">Add Habit</a>
             </div>
         <?php endif; ?>
     </div>

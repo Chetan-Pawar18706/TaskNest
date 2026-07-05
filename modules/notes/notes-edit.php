@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 requireLogin($auth);
 
 $user_id = $auth->getUserId();
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($_FILES['attachment']['size'] > 10 * 1024 * 1024) {
                 $error = 'File must be less than 10MB.';
             } else {
-                $dir = __DIR__ . '/uploads/notes/';
+                $dir = __DIR__ . '/../../uploads/notes/';
                 if (!is_dir($dir)) mkdir($dir, 0755, true);
                 $filename = 'note_' . $note_id . '_' . time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $_FILES['attachment']['name']);
                 if (move_uploaded_file($_FILES['attachment']['tmp_name'], $dir . $filename)) {
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="notes-page">
@@ -189,4 +189,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

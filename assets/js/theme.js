@@ -50,7 +50,27 @@
         
         localStorage.setItem(THEME_STORAGE_KEY, theme);
         document.body.setAttribute('data-theme', theme);
+        
+        // Update sun/moon icons in navbar
+        updateThemeIcons(theme);
+        
         window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
+    }
+    
+    /**
+     * Update sun/moon icons visibility
+     */
+    function updateThemeIcons(theme) {
+        const sunIcons = document.querySelectorAll('.sun-icon');
+        const moonIcons = document.querySelectorAll('.moon-icon');
+        
+        sunIcons.forEach(icon => {
+            icon.style.display = theme === DARK_THEME ? 'none' : 'block';
+        });
+        
+        moonIcons.forEach(icon => {
+            icon.style.display = theme === DARK_THEME ? 'block' : 'none';
+        });
     }
     
     /**
@@ -77,7 +97,14 @@
         
         if (!toggleBtn) return;
         
+        // Set initial icon state
+        const currentTheme = getCurrentTheme();
+        updateThemeIcons(currentTheme);
+        
         toggleBtn.addEventListener('click', () => {
+            // Add rotation animation
+            toggleBtn.classList.toggle('rotating');
+            
             toggleTheme();
         });
     }

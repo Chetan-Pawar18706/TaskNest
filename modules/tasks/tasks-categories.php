@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 requireLogin($auth);
 
@@ -11,7 +11,7 @@ ensureTaskTablesExist($mysqli);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!$auth->verifyCsrfToken($csrf)) {
-        redirect(SITE_URL . '/tasks-categories.php?error=csrf');
+        redirect(SITE_URL . '/modules/tasks/tasks-categories.php?error=csrf');
     }
 
     $action = $_POST['action'] ?? '';
@@ -28,14 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $_SESSION['flash_error'] = $result['message'];
     }
-    redirect(SITE_URL . '/tasks-categories.php');
+    redirect(SITE_URL . '/modules/tasks/tasks-categories.php');
 }
 
 $categories = getTaskCategories($mysqli, $user_id);
 
 $page_title = 'Manage Task Categories';
 $additional_css = ['tasks.css'];
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 
 $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error = $_SESSION['flash_error'] ?? '';
@@ -67,7 +67,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;">
         <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:2rem;box-shadow:var(--shadow-sm);">
             <h2 style="margin:0 0 1.5rem;font-size:1.2rem;font-weight:600;">Add New Category</h2>
-            <form method="post" action="<?php echo SITE_URL; ?>/tasks-categories.php">
+            <form method="post" action="<?php echo SITE_URL; ?>/modules/tasks/tasks-categories.php">
                 <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
                 <input type="hidden" name="action" value="save_category">
 
@@ -137,7 +137,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     <h3 style="margin:0;font-size:1.2rem;font-weight:600;">Edit Category</h3>
                     <button type="button" onclick="closeEditModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);">&times;</button>
                 </div>
-                <form method="post" action="<?php echo SITE_URL; ?>/tasks-categories.php" style="padding:1.5rem;">
+                <form method="post" action="<?php echo SITE_URL; ?>/modules/tasks/tasks-categories.php" style="padding:1.5rem;">
                     <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
                     <input type="hidden" name="action" value="save_category">
                     <input type="hidden" name="category_id" id="edit-category-id">
@@ -176,7 +176,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 </div>
                 <div style="padding:1.5rem;">
                     <p style="margin:0 0 1rem;color:var(--text-secondary);">Are you sure you want to delete the category <strong id="delete-cat-name"></strong>? Tasks in this category will become uncategorized.</p>
-                    <form method="post" action="<?php echo SITE_URL; ?>/tasks-categories.php">
+                    <form method="post" action="<?php echo SITE_URL; ?>/modules/tasks/tasks-categories.php">
                         <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
                         <input type="hidden" name="action" value="delete_category">
                         <input type="hidden" name="category_id" id="delete-category-id">
@@ -223,4 +223,4 @@ document.getElementById('deleteCategoryModal').addEventListener('click', functio
 });
 </script>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

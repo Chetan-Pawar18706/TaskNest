@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 requireLogin($auth);
 
@@ -12,7 +12,7 @@ $categories = getTaskCategories($mysqli, $user_id);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!$auth->verifyCsrfToken($csrf)) {
-        redirect(SITE_URL . '/tasks-add.php?error=csrf');
+        redirect(SITE_URL . '/modules/tasks/tasks-add.php?error=csrf');
     }
 
     // Handle file upload
@@ -22,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ext = strtolower(pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, $allowed)) {
             $_SESSION['flash_error'] = 'File type not allowed.';
-            redirect(SITE_URL . '/tasks-add.php');
+            redirect(SITE_URL . '/modules/tasks/tasks-add.php');
         }
         if ($_FILES['attachment']['size'] > 10 * 1024 * 1024) {
             $_SESSION['flash_error'] = 'File must be less than 10MB.';
-            redirect(SITE_URL . '/tasks-add.php');
+            redirect(SITE_URL . '/modules/tasks/tasks-add.php');
         }
         $dir = __DIR__ . '/uploads/tasks/';
         if (!is_dir($dir)) mkdir($dir, 0755, true);
@@ -43,13 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(SITE_URL . '/tasks.php');
     } else {
         $_SESSION['flash_error'] = $result['message'];
-        redirect(SITE_URL . '/tasks-add.php');
+        redirect(SITE_URL . '/modules/tasks/tasks-add.php');
     }
 }
 
 $page_title = 'Add Task';
 $additional_css = ['tasks.css'];
-include __DIR__ . '/includes/header.php';
+include __DIR__ . '/../../includes/header.php';
 
 $flash_error = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_error']);
@@ -81,7 +81,7 @@ $reminder_datetime = $_POST['reminder_datetime'] ?? '';
     <?php endif; ?>
 
     <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow-sm);max-width:720px;">
-        <form method="post" action="<?php echo SITE_URL; ?>/tasks-add.php" enctype="multipart/form-data">
+        <form method="post" action="<?php echo SITE_URL; ?>/modules/tasks/tasks-add.php" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?php echo $auth->generateCsrfToken(); ?>">
 
             <div class="form-group">
@@ -150,4 +150,4 @@ $reminder_datetime = $_POST['reminder_datetime'] ?? '';
     </div>
 </div>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>

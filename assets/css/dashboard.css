@@ -358,6 +358,10 @@ body {
     color: var(--color-primary);
 }
 
+.quick-actions-section {
+    margin-bottom: 1.5rem;
+}
+
 .quick-action-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -375,6 +379,7 @@ body {
     border-radius: 0.95rem;
     padding: 0.9rem;
     cursor: pointer;
+    text-decoration: none;
     transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
