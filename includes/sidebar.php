@@ -181,13 +181,25 @@ $navClass = function ($page) use ($current_page) {
     <!-- Sidebar Footer -->
     <div class="sidebar-footer">
         <div class="sidebar-profile">
-            <div class="sidebar-profile-badge">
-                <span><?php echo htmlspecialchars(substr($user['first_name'] ?? $user['username'], 0, 1)); ?></span>
-            </div>
+            <?php if (!empty($user['avatar_url'])): ?>
+                <img src="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Profile" class="sidebar-profile-avatar">
+            <?php else: ?>
+                <img src="<?php echo SITE_URL; ?>/assets/images/default-avatar.svg" alt="Profile" class="sidebar-profile-avatar">
+            <?php endif; ?>
             <div>
                 <strong><?php echo htmlspecialchars($user['first_name'] ?? $user['username']); ?></strong>
                 <p>Premium workspace</p>
             </div>
+        </div>
+        <div class="sidebar-footer-links">
+            <a href="<?php echo SITE_URL; ?>/settings.php" class="sidebar-footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+            </a>
+            <a href="<?php echo SITE_URL; ?>/2fa-setup.php" class="sidebar-footer-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>Security</span>
+            </a>
         </div>
         <a href="<?php echo SITE_URL; ?>/logout.php" class="btn btn-secondary btn-block">Logout</a>
         <div class="version-info">

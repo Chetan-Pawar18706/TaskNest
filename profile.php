@@ -32,7 +32,7 @@ include 'includes/header.php';
         
         <div class="card-body">
             <div class="profile-header">
-                <img src="<?php echo htmlspecialchars($profile['avatar_url'] ?? getGravatarUrl($profile['email'])); ?>" alt="Profile picture" class="profile-avatar">
+                <img src="<?php echo !empty($profile['avatar_url']) ? htmlspecialchars($profile['avatar_url']) : SITE_URL . '/assets/images/default-avatar.svg'; ?>" alt="Profile picture" class="profile-avatar">
                 <div class="profile-info">
                     <h3><?php echo htmlspecialchars($profile['first_name'] . ' ' . $profile['last_name']); ?></h3>
                     <p><?php echo htmlspecialchars($profile['email']); ?></p>

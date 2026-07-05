@@ -27,6 +27,21 @@ $stmt->execute();
 $profile = $stmt->get_result()->fetch_assoc();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Quick AJAX theme save
+    if (isset($_POST['action']) && $_POST['action'] === 'save_theme') {
+        header('Content-Type: application/json');
+        if (!isset($_POST['csrf_token']) || !$auth->verifyCsrfToken($_POST['csrf_token'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid token']);
+            exit;
+        }
+        $theme = in_array($_POST['theme'] ?? '', ['light', 'dark']) ? $_POST['theme'] : 'light';
+        $stmt = safePrepare($mysqli, "UPDATE users SET theme = ? WHERE id = ?");
+        $stmt->bind_param("si", $theme, $user_id);
+        $stmt->execute();
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
     // Verify CSRF token
     if (!isset($_POST['csrf_token']) || !$auth->verifyCsrfToken($_POST['csrf_token'])) {
         $errors[] = 'Security token invalid';
@@ -147,7 +162,7 @@ include 'includes/header.php';
                             <?php if (!empty($profile['avatar_url'])): ?>
                                 <img src="<?php echo SITE_URL; ?>/<?php echo htmlspecialchars($profile['avatar_url']); ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
                             <?php else: ?>
-                                <span style="font-size:1.5rem;color:var(--text-muted);">👤</span>
+                                <img src="<?php echo SITE_URL; ?>/assets/images/default-avatar.svg" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
                             <?php endif; ?>
                         </div>
                         <div style="flex:1;">
@@ -254,6 +269,29 @@ include 'includes/header.php';
                     >
                     <label for="notifications_enabled">Enable notifications</label>
                 </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div class="form-section">
+                <h3>Security</h3>
+                
+                <?php $tfaEnabled = $auth->isTwoFactorEnabled($user_id); ?>
+                <div class="tfa-settings-row">
+                    <div>
+                        <strong>Two-Factor Authentication</strong>
+                        <p class="tfa-settings-desc">Add an extra layer of security to your account</p>
+                    </div>
+                    <?php if ($tfaEnabled): ?>
+                        <span class="badge badge-success">Enabled</span>
+                    <?php else: ?>
+                        <span class="badge badge-warning">Disabled</span>
+                    <?php endif; ?>
+                </div>
+                
+                <a href="<?php echo SITE_URL; ?>/2fa-setup.php" class="btn btn-secondary" style="margin-top:0.5rem;">
+                    <?php echo $tfaEnabled ? 'Manage 2FA' : 'Enable 2FA'; ?>
+                </a>
             </div>
             
             <div class="form-actions">

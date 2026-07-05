@@ -20,7 +20,8 @@
 .docs-summary .summary-card strong { font-size: 1.5rem; color: var(--text-primary); margin-top: 0.25rem; }
 
 .docs-controls { margin-bottom: 1.5rem; }
-.docs-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.docs-filters { display: none; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.docs-filters.open { display: flex; }
 .docs-filters .form-control { min-width: 140px; }
 
 .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }

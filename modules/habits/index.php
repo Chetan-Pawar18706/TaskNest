@@ -33,6 +33,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="summary-card"><span class="summary-label">Best Streak</span><strong><?php echo (int) $habitStats['best_streak']; ?> days</strong></div>
     </div>
 
+    <div class="habits-controls">
+        <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filters</span>
+        </button>
+        <form class="habits-filters" id="habitsFilterForm" method="get">
+            <input type="text" name="search" class="form-control" placeholder="Search habits..." value="<?php echo htmlspecialchars($filters['search']); ?>">
+            <button class="btn btn-secondary" type="submit">Apply</button>
+        </form>
+    </div>
+
     <div id="habitsGrid" class="habits-grid">
         <?php if (!empty($habitsData['items'])): ?>
             <?php foreach ($habitsData['items'] as $habit):
@@ -89,6 +102,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('filterToggleBtn');
+    var filterForm = document.getElementById('habitsFilterForm');
+    if (toggleBtn && filterForm) {
+        toggleBtn.addEventListener('click', function() {
+            filterForm.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+        });
+    }
+});
+
 window.addEventListener('load', function() {
     if (typeof Chart === 'undefined') return;
     var payload = new FormData();

@@ -54,6 +54,9 @@
         // Update sun/moon icons in navbar
         updateThemeIcons(theme);
         
+        // Save to database via AJAX
+        saveThemeToServer(theme);
+        
         window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
     }
     
@@ -87,6 +90,19 @@
         const currentTheme = getCurrentTheme();
         const newTheme = currentTheme === LIGHT_THEME ? DARK_THEME : LIGHT_THEME;
         setTheme(newTheme);
+    }
+    
+    /**
+     * Save theme to server
+     */
+    function saveThemeToServer(theme) {
+        if (typeof siteUrl === 'undefined') return;
+        var token = (typeof csrfToken !== 'undefined') ? csrfToken : '';
+        var p = new FormData();
+        p.append('action', 'save_theme');
+        p.append('theme', theme);
+        p.append('csrf_token', token);
+        fetch(siteUrl + '/settings.php', { method: 'POST', body: p }).catch(function(){});
     }
     
     /**

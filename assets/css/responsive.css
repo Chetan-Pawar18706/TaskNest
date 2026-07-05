@@ -450,3 +450,20 @@
         opacity: 0.8;
     }
 }
+
+/* 2FA Responsive */
+@media (max-width: 480px) {
+    .tfa-backup-codes {
+        grid-template-columns: 1fr;
+    }
+    
+    .tfa-code-input {
+        font-size: 1.2rem !important;
+        letter-spacing: 5px;
+    }
+    
+    .tfa-qr-code {
+        width: 160px;
+        height: 160px;
+    }
+}

@@ -15,15 +15,15 @@
     <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/images/logo-dark.png">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/variables.css">
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/reset.css">
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/styles.css">
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/components.css">
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/theme.css">
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/responsive.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/variables.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/TaskNest/assets/css/variables.css'); ?>">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/reset.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/TaskNest/assets/css/reset.css'); ?>">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/styles.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/TaskNest/assets/css/styles.css'); ?>">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/components.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/TaskNest/assets/css/components.css'); ?>">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/theme.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/TaskNest/assets/css/theme.css'); ?>">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/responsive.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/TaskNest/assets/css/responsive.css'); ?>">
     
     <?php if (isset($additional_css)) { foreach ($additional_css as $css) { ?>
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/<?php echo $css; ?>">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/<?php echo $css; ?>?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/TaskNest/assets/css/' . $css); ?>">
     <?php } } ?>
 </head>
 <body data-theme="<?php echo $auth->isLoggedIn() ? ($auth->getUser()['theme'] ?? 'light') : 'light'; ?>">

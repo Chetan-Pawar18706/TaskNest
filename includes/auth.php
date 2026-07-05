@@ -343,9 +343,253 @@ class Auth {
     }
     
     /**
+     * ==================== TWO-FACTOR AUTHENTICATION ====================
+     */
+    
+    /**
+     * Generate a new TOTP secret (Base32 encoded)
+     */
+    public function generateTwoFactorSecret() {
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        $secret = '';
+        for ($i = 0; $i < 32; $i++) {
+            $secret .= $chars[random_int(0, 31)];
+        }
+        return $secret;
+    }
+    
+    /**
+     * Generate TOTP URI for QR code (otpauth://)
+     */
+    public function getTwoFactorUri($secret) {
+        $user = $this->getUser();
+        $label = urlencode($user['email']);
+        $issuer = urlencode(SITE_NAME);
+        return "otpauth://totp/{$issuer}:{$label}?secret={$secret}&issuer={$issuer}&digits=6&period=30";
+    }
+    
+    /**
+     * Generate current TOTP code from secret
+     */
+    public function generateTotpCode($secret) {
+        $time = floor(time() / 30);
+        $secretKey = $this->base32Decode($secret);
+        
+        // Pack time into 8-byte buffer
+        $timeBytes = pack('N*', 0) . pack('N*', $time);
+        
+        // HMAC-SHA1
+        $hmac = hash_hmac('sha1', $timeBytes, $secretKey, true);
+        
+        // Dynamic truncation
+        $offset = ord($hmac[19]) & 0x0f;
+        $code = (
+            ((ord($hmac[$offset]) & 0x7f) << 24) |
+            ((ord($hmac[$offset + 1]) & 0xff) << 16) |
+            ((ord($hmac[$offset + 2]) & 0xff) << 8) |
+            (ord($hmac[$offset + 3]) & 0xff)
+        ) % 1000000;
+        
+        return str_pad((string) $code, 6, '0', STR_PAD_LEFT);
+    }
+    
+    /**
+     * Verify a TOTP code (checks current and ±1 time window)
+     */
+    public function verifyTotpCode($secret, $code) {
+        $code = preg_replace('/\s+/', '', $code);
+        if (strlen($code) !== 6 || !ctype_digit($code)) {
+            return false;
+        }
+        
+        // Check current time and ±1 window (90 seconds total)
+        for ($i = -1; $i <= 1; $i++) {
+            $time = floor(time() / 30) + $i;
+            $secretKey = $this->base32Decode($secret);
+            
+            $timeBytes = pack('N*', 0) . pack('N*', $time);
+            $hmac = hash_hmac('sha1', $timeBytes, $secretKey, true);
+            
+            $offset = ord($hmac[19]) & 0x0f;
+            $expectedCode = (
+                ((ord($hmac[$offset]) & 0x7f) << 24) |
+                ((ord($hmac[$offset + 1]) & 0xff) << 16) |
+                ((ord($hmac[$offset + 2]) & 0xff) << 8) |
+                (ord($hmac[$offset + 3]) & 0xff)
+            ) % 1000000;
+            
+            $expectedStr = str_pad((string) $expectedCode, 6, '0', STR_PAD_LEFT);
+            if (hash_equals($expectedStr, $code)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Base32 decode
+     */
+    private function base32Decode($input) {
+        $map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        $input = strtoupper($input);
+        $input = rtrim($input, '=');
+        
+        $buffer = 0;
+        $bitsLeft = 0;
+        $output = '';
+        
+        for ($i = 0, $len = strlen($input); $i < $len; $i++) {
+            $val = strpos($map, $input[$i]);
+            if ($val === false) continue;
+            
+            $buffer = ($buffer << 5) | $val;
+            $bitsLeft += 5;
+            
+            if ($bitsLeft >= 8) {
+                $bitsLeft -= 8;
+                $output .= chr(($buffer >> $bitsLeft) & 0xff);
+            }
+        }
+        
+        return $output;
+    }
+    
+    /**
+     * Generate backup codes (8 codes, each 8 chars)
+     */
+    public function generateBackupCodes() {
+        $codes = [];
+        for ($i = 0; $i < 8; $i++) {
+            $code = bin2hex(random_bytes(4));
+            $codes[] = $code;
+        }
+        return $codes;
+    }
+    
+    /**
+     * Hash backup codes for storage
+     */
+    public function hashBackupCodes($codes) {
+        return array_map(fn($code) => password_hash($code, PASSWORD_DEFAULT), $codes);
+    }
+    
+    /**
+     * Verify a backup code
+     */
+    public function verifyBackupCode($userId, $code) {
+        $stmt = $this->mysqli->prepare("SELECT two_factor_backup_codes FROM settings WHERE user_id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        
+        if (empty($result['two_factor_backup_codes'])) {
+            return false;
+        }
+        
+        $hashedCodes = json_decode($result['two_factor_backup_codes'], true);
+        if (!is_array($hashedCodes)) {
+            return false;
+        }
+        
+        foreach ($hashedCodes as $index => $hashedCode) {
+            if (password_verify($code, $hashedCode)) {
+                // Remove used backup code
+                unset($hashedCodes[$index]);
+                $stmtUpdate = $this->mysqli->prepare("UPDATE settings SET two_factor_backup_codes = ? WHERE user_id = ?");
+                $newCodes = json_encode(array_values($hashedCodes));
+                $stmtUpdate->bind_param("si", $newCodes, $userId);
+                $stmtUpdate->execute();
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if 2FA is enabled for user
+     */
+    public function isTwoFactorEnabled($userId) {
+        $stmt = $this->mysqli->prepare("SELECT two_factor_enabled FROM settings WHERE user_id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        return isset($result['two_factor_enabled']) && $result['two_factor_enabled'] == 1;
+    }
+    
+    /**
+     * Get 2FA secret for user
+     */
+    public function getTwoFactorSecret($userId) {
+        $stmt = $this->mysqli->prepare("SELECT two_factor_secret FROM settings WHERE user_id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        return $result['two_factor_secret'] ?? null;
+    }
+    
+    /**
+     * Enable 2FA for user
+     */
+    public function enableTwoFactor($userId, $secret, $backupCodes) {
+        $hashedCodes = $this->hashBackupCodes($backupCodes);
+        $codesJson = json_encode($hashedCodes);
+        
+        $stmt = $this->mysqli->prepare("UPDATE settings SET two_factor_enabled = 1, two_factor_secret = ?, two_factor_backup_codes = ? WHERE user_id = ?");
+        $stmt->bind_param("ssi", $secret, $codesJson, $userId);
+        return $stmt->execute();
+    }
+    
+    /**
+     * Disable 2FA for user
+     */
+    public function disableTwoFactor($userId) {
+        $stmt = $this->mysqli->prepare("UPDATE settings SET two_factor_enabled = 0, two_factor_secret = NULL, two_factor_backup_codes = NULL WHERE user_id = ?");
+        $stmt->bind_param("i", $userId);
+        return $stmt->execute();
+    }
+    
+    /**
+     * Set 2FA pending verification in session
+     */
+    public function setTwoFactorPending($userId) {
+        $_SESSION['two_factor_pending'] = true;
+        $_SESSION['two_factor_user_id'] = $userId;
+    }
+    
+    /**
+     * Check if 2FA verification is pending
+     */
+    public function isTwoFactorPending() {
+        return isset($_SESSION['two_factor_pending']) && $_SESSION['two_factor_pending'] === true;
+    }
+    
+    /**
+     * Complete 2FA verification
+     */
+    public function completeTwoFactorVerification() {
+        unset($_SESSION['two_factor_pending']);
+        $userId = $_SESSION['two_factor_user_id'] ?? null;
+        unset($_SESSION['two_factor_user_id']);
+        
+        if ($userId) {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $userId;
+            $_SESSION['login_time'] = time();
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            $this->user_id = $userId;
+            $this->loadUser();
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
      * Log activity
      */
-    private function logActivity($user_id, $action, $entity_type, $entity_id, $description) {
+    public function logActivity($user_id, $action, $entity_type, $entity_id, $description) {
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? '';
         $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         

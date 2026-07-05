@@ -10,7 +10,8 @@
 .habits-summary .summary-card strong { font-size: 1.5rem; color: var(--text-primary); margin-top: 0.25rem; }
 
 .habits-controls { margin-bottom: 1.5rem; }
-.habits-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.habits-filters { display: none; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.habits-filters.open { display: flex; }
 
 .habits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 

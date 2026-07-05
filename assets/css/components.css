@@ -54,6 +54,13 @@
     font-weight: 700;
 }
 
+.sidebar-profile-avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
 .sidebar-profile p {
     margin: .15rem 0 0;
     color: var(--text-tertiary);

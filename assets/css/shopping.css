@@ -10,7 +10,8 @@
 .shopping-summary .summary-card strong { font-size: 1.5rem; color: var(--text-primary); margin-top: 0.25rem; }
 
 .shopping-controls { margin-bottom: 1.5rem; }
-.shopping-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.shopping-filters { display: none; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.shopping-filters.open { display: flex; }
 
 .shopping-add-form { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
 .shopping-add-form .form-control { flex: 1; min-width: 150px; }

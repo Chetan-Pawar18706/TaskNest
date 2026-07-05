@@ -26,6 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $auth->login($email, $password, $remember_me);
         
         if ($result['success']) {
+            // Check if 2FA is enabled for this user
+            $userId = $auth->getUserId();
+            if ($userId && $auth->isTwoFactorEnabled($userId)) {
+                // Don't fully log in yet - set 2FA pending
+                $_SESSION['user_id'] = null;
+                unset($_SESSION['user_id']);
+                $auth->setTwoFactorPending($userId);
+                redirect(SITE_URL . '/2fa-verify.php');
+            }
             redirect(SITE_URL . '/dashboard.php');
         } else {
             $errors = $result['errors'] ?? [];

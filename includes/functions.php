@@ -704,9 +704,10 @@ function logMessage($message, $type = 'INFO') {
 /**
  * Get gravatar URL
  */
-function getGravatarUrl($email, $size = 150, $default = 'mp') {
+function getGravatarUrl($email, $size = 150) {
+    $localDefault = defined('SITE_URL') ? SITE_URL . '/assets/images/default-avatar.svg' : '/assets/images/default-avatar.svg';
     $hash = md5(strtolower(trim($email)));
-    return "https://www.gravatar.com/avatar/{$hash}?s={$size}&d={$default}";
+    return "https://www.gravatar.com/avatar/{$hash}?s={$size}&d=" . urlencode($localDefault);
 }
 
 function ensureTaskTablesExist($mysqli) {

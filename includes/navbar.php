@@ -3,7 +3,10 @@
  * TaskNest - Navbar Component
  */
 $user = $auth->getUser();
-$avatar_url = $user['avatar_url'] ?? getGravatarUrl($user['email']);
+$avatar_url = $user['avatar_url'] ?? '';
+if (empty($avatar_url)) {
+    $avatar_url = SITE_URL . '/assets/images/default-avatar.svg';
+}
 ?>
 <nav class="top-navbar">
     <div class="navbar-left">
