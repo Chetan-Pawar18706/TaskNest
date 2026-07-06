@@ -17,7 +17,7 @@ define('SITE_NAME', 'TaskNest');
 define('SITE_DESCRIPTION', 'All-in-one Personal Life Management System');
 
 // Security Configuration
-define('JWT_SECRET', 'your-super-secret-jwt-key-change-in-production-min-32-chars');
+define('JWT_SECRET', getenv('TASKNEST_JWT_SECRET') ?: 'CHANGE-THIS-IN-PRODUCTION-min-32-chars-random');
 define('SESSION_TIMEOUT', 1800); // 30 minutes
 define('REMEMBER_ME_DURATION', 604800); // 7 days
 define('CSRF_TOKEN_LENGTH', 32);
@@ -39,7 +39,7 @@ define('MAIL_FROM_EMAIL', 'noreply@tasknest.local');
 define('MAIL_FROM_NAME', 'TaskNest');
 
 // Debug Mode
-define('DEBUG', true);
+define('DEBUG', false);
 define('LOG_ERRORS', true);
 
 // Error Reporting

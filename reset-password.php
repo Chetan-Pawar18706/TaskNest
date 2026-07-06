@@ -52,7 +52,7 @@ $page_title = 'Reset Password';
     <meta name="description" content="Reset your <?php echo SITE_NAME; ?> password">
     <title><?php echo $page_title; ?> - <?php echo SITE_NAME; ?></title>
     
-    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/images/logo-dark.png">
+    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/images/favicon.png">
     
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/variables.css">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/reset.css">

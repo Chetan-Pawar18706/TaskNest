@@ -12,7 +12,7 @@
      * Initialize application
      */
     TaskNest.init = function() {
-        console.log('TaskNest initialized');
+        if (typeof debugMode !== 'undefined' && debugMode) console.log('TaskNest initialized');
         this.setupEventListeners();
     };
     
@@ -66,7 +66,7 @@
             
             return data;
         } catch (error) {
-            if (debugMode) console.error('Request error:', error);
+            if (typeof debugMode !== 'undefined' && debugMode) console.error('Request error:', error);
             throw error;
         }
     };

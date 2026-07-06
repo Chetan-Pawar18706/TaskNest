@@ -68,7 +68,8 @@
                         canvas.dataset.expenses = JSON.stringify(data.expenses);
                     }
                     drawExpenseChart(canvas);
-                });
+                })
+                .catch(function() { drawExpenseChart(canvas); });
         } else {
             drawExpenseChart(canvas);
         }
@@ -150,7 +151,7 @@
             var isToday = today.getMonth() === state.calendarMonth && today.getFullYear() === state.calendarYear && today.getDate() === day;
             var dateStr = state.calendarYear + '-' + String(state.calendarMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
             var hasEvent = eventsByDate[dateStr] && eventsByDate[dateStr].length > 0;
-            var eventTitles = hasEvent ? eventsByDate[dateStr].map(function(e) { return e.title; }).join(', ') : '';
+            var eventTitles = hasEvent ? eventsByDate[dateStr].map(function(e) { return typeof TaskNest !== 'undefined' ? TaskNest.encodeHTML(e.title) : e.title; }).join(', ') : '';
 
             html += '<div class="calendar-cell' + (isToday ? ' is-today' : '') + (hasEvent ? ' has-event' : '') + '" data-date="' + dateStr + '">';
             html += '<span class="calendar-cell-number">' + day + '</span>';
@@ -172,7 +173,9 @@
                 if (!evts || evts.length === 0) return;
                 var html2 = '<div class="tooltip-header">' + dateStr + '</div>';
                 evts.forEach(function(ev) {
-                    html2 += '<div class="tooltip-item"><span class="tooltip-dot"></span>' + ev.title + (ev.description ? '<span class="tooltip-desc">' + ev.description + '</span>' : '') + '</div>';
+                    var safeTitle = typeof TaskNest !== 'undefined' ? TaskNest.encodeHTML(ev.title) : ev.title;
+                var safeDesc = ev.description ? (typeof TaskNest !== 'undefined' ? TaskNest.encodeHTML(ev.description) : ev.description) : '';
+                html2 += '<div class="tooltip-item"><span class="tooltip-dot"></span>' + safeTitle + (safeDesc ? '<span class="tooltip-desc">' + safeDesc + '</span>' : '') + '</div>';
                 });
                 tooltip.innerHTML = html2;
                 tooltip.style.display = 'block';

@@ -12,15 +12,6 @@ Options -Indexes
     RewriteRule ^logs/ - [F,L]
 </IfModule>
 
-# Prevent PHP execution in uploads directory
-<IfModule mod_authz_core.c>
-    <FilesMatch "\.php$">
-        <IfModule !mod_access_compat.c>
-            Require all denied
-        </IfModule>
-    </FilesMatch>
-</IfModule>
-
 # Force HTTPS in production (uncomment when ready)
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
@@ -29,8 +20,9 @@ Options -Indexes
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
-    Header set X-XSS-Protection "1; mode=block"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
 </IfModule>
 
 # Disable server signature

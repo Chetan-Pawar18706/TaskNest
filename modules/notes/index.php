@@ -103,7 +103,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php endif; ?>
                         </div>
                         <h3><?php echo htmlspecialchars($note['title']); ?></h3>
-                        <div class="note-content-preview"><?php echo strip_tags($note['content'] ?? ''); ?></div>
+                        <div class="note-content-preview"><?php echo htmlspecialchars(strip_tags($note['content'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
                         <div class="note-card-meta">
                             <span><?php echo timeAgo($note['updated_at']); ?></span>
                             <?php if (!empty($note['category_name'])): ?>

@@ -20,7 +20,7 @@
 
         setTheme(initialTheme);
 
-        window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (!localStorage.getItem(THEME_STORAGE_KEY)) {
                 setTheme(e.matches ? DARK_THEME : LIGHT_THEME);
             }

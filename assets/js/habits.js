@@ -16,7 +16,8 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Deleted.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 
     window.logHabit = function (id) {
@@ -30,6 +31,7 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Logged.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 })();

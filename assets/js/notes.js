@@ -16,7 +16,8 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Deleted.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 
     window.permanentDeleteNote = function (id) {
@@ -30,7 +31,8 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Deleted.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 
     window.togglePinNote = function (id) {
@@ -40,7 +42,8 @@
         p.append('csrf_token', getCsrfToken());
         fetch(siteUrl + '/modules/notes/notes.php', { method: 'POST', body: p })
             .then(function (r) { return r.json(); })
-            .then(function (r) { if (r.success) window.location.reload(); else showToast(r.message || 'Failed.', 'error'); });
+            .then(function (r) { if (r.success) window.location.reload(); else showToast(r.message || 'Failed.', 'error'); })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 
     window.toggleArchiveNote = function (id) {
@@ -50,6 +53,7 @@
         p.append('csrf_token', getCsrfToken());
         fetch(siteUrl + '/modules/notes/notes.php', { method: 'POST', body: p })
             .then(function (r) { return r.json(); })
-            .then(function (r) { if (r.success) window.location.reload(); else showToast(r.message || 'Failed.', 'error'); });
+            .then(function (r) { if (r.success) window.location.reload(); else showToast(r.message || 'Failed.', 'error'); })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 })();

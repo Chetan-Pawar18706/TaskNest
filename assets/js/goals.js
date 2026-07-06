@@ -16,7 +16,8 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Deleted.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 
     window.updateGoalProgress = function (id) {
@@ -33,6 +34,7 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Updated.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 })();

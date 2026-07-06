@@ -17,7 +17,7 @@ if (empty($avatar_url)) {
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </button>
-        <h1 class="page-title"><?php echo $page_title ?? 'Dashboard'; ?></h1>
+        <h1 class="page-title"><?php echo htmlspecialchars($page_title ?? 'Dashboard', ENT_QUOTES, 'UTF-8'); ?></h1>
     </div>
     
     <div class="navbar-right">

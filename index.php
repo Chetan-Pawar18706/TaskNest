@@ -21,7 +21,7 @@ $page_title = 'Welcome to TaskNest';
     <meta name="description" content="<?php echo SITE_DESCRIPTION; ?>">
     <title><?php echo $page_title; ?> - <?php echo SITE_NAME; ?></title>
 
-    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/images/logo-dark.png">
+    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/images/favicon.png">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/variables.css">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/reset.css">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/styles.css">
@@ -42,9 +42,16 @@ $page_title = 'Welcome to TaskNest';
             <li><a href="#reviews">Reviews</a></li>
         </ul>
         <div class="nav-actions">
-            <a href="<?php echo SITE_URL; ?>/login.php" class="btn-hero-secondary" style="padding: 10px 20px; font-size: 0.875rem;">Sign In</a>
-            <a href="<?php echo SITE_URL; ?>/register.php" class="btn-hero-primary" style="padding: 10px 20px; font-size: 0.875rem;">Get Started</a>
+            <a href="<?php echo SITE_URL; ?>/login.php" class="btn-hero-secondary nav-btn-sm">Sign In</a>
+            <a href="<?php echo SITE_URL; ?>/register.php" class="btn-hero-primary nav-btn-sm">Get Started</a>
         </div>
+        <button class="landing-menu-toggle" id="landingMenuToggle" aria-label="Toggle menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
     </nav>
 
     <!-- ── Hero Section ────────────────────────── -->
@@ -354,6 +361,19 @@ $page_title = 'Welcome to TaskNest';
     </footer>
 
     <script>
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('landingMenuToggle');
+    const landingNav = document.getElementById('landingNav');
+    if (menuToggle && landingNav) {
+        menuToggle.addEventListener('click', () => {
+            landingNav.classList.toggle('mobile-open');
+        });
+        // Close menu on link click
+        landingNav.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => landingNav.classList.remove('mobile-open'));
+        });
+    }
+
     // Navbar scroll effect
     const nav = document.getElementById('landingNav');
     window.addEventListener('scroll', () => {

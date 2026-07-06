@@ -1,0 +1,26 @@
+# Prevent PHP execution in uploads directory
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_access_compat.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+
+# Only allow uploaded image/document files
+<FilesMatch "\.(?i:jpg|jpeg|png|gif|webp|pdf|doc|docx|txt|csv|xls|xlsx)$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_access_compat.c>
+        Order allow,deny
+        Allow from all
+    </IfModule>
+</FilesMatch>
+
+# Prevent script execution
+<FilesMatch "\.(?i:php|php3|php4|php5|php7|phtml|phps|phar|cgi|pl|py|jsp|asp|aspx|exe|bat|cmd|com|msi|scr|sh|bash)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>

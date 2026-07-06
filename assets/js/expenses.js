@@ -16,7 +16,8 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Deleted.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 
     window.deleteBudget = function (id) {
@@ -30,7 +31,8 @@
                 if (!r.success) { showToast(r.message || 'Failed.', 'error'); return; }
                 showToast(r.message || 'Deleted.', 'success');
                 window.location.reload();
-            });
+            })
+            .catch(function () { showToast('Network error.', 'error'); });
     };
 
     // CSV Export
@@ -57,6 +59,8 @@
     // Restore active tab from URL
     var urlParams = new URLSearchParams(window.location.search);
     var activeTab = urlParams.get('tab') || 'transactions';
+    var validTabs = ['transactions', 'budgets', 'charts', 'categories'];
+    if (validTabs.indexOf(activeTab) === -1) activeTab = 'transactions';
     var tabBtn = document.querySelector('.expenses-tab[data-tab="' + activeTab + '"]');
     if (tabBtn) tabBtn.click();
 
