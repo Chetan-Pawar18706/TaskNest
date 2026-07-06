@@ -3577,3 +3577,437 @@ function getRegistrationStatus($mysqli) {
     $row = $stmt->get_result()->fetch_assoc();
     return $row ? $row['setting_value'] === '1' : true;
 }
+
+// ═══════════════════════════════════════════════════════════
+// PASSWORD MANAGER - Encryption & Handler Functions
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Derive encryption key from user's password using Argon2id
+ */
+function deriveEncryptionKey($userPassword, $salt = 'tasknest-vault-salt') {
+    if (function_exists('sodium_crypto_pwhash')) {
+        return sodium_crypto_pwhash(
+            SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
+            $userPassword,
+            $salt,
+            SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
+            SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
+        );
+    }
+    // Fallback: PBKDF2 with SHA-256
+    return hash_pbkdf2('sha256', $userPassword, $salt, 100000, 32, true);
+}
+
+/**
+ * Encrypt a plaintext password using AES-256
+ */
+function encryptPassword($plaintext, $key) {
+    if (function_exists('sodium_crypto_secretbox')) {
+        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $ciphertext = sodium_crypto_secretbox($plaintext, $nonce, $key);
+        sodium_memzero($key);
+        return base64_encode($nonce . $ciphertext);
+    }
+    // Fallback: openssl
+    $iv = random_bytes(16);
+    $encrypted = openssl_encrypt($plaintext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, '', 16);
+    sodium_memzero($key);
+    return base64_encode($iv . $tag . $encrypted);
+}
+
+/**
+ * Decrypt an encrypted password back to plaintext
+ */
+function decryptPassword($encryptedBase64, $key) {
+    $data = base64_decode($encryptedBase64, true);
+    if ($data === false) return false;
+
+    if (function_exists('sodium_crypto_secretbox_open')) {
+        $nonce = substr($data, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $ciphertext = substr($data, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, $key);
+        sodium_memzero($key);
+        return $plaintext === false ? false : $plaintext;
+    }
+    // Fallback: openssl
+    $iv = substr($data, 0, 16);
+    $tag = substr($data, 16, 16);
+    $ciphertext = substr($data, 32);
+    $plaintext = openssl_decrypt($ciphertext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+    sodium_memzero($key);
+    return $plaintext === false ? false : $plaintext;
+}
+
+/**
+ * Generate a random strong password
+ */
+function generateStrongPassword($length = 16, $options = []) {
+    $uppercase = $options['uppercase'] ?? true;
+    $lowercase = $options['lowercase'] ?? true;
+    $numbers = $options['numbers'] ?? true;
+    $symbols = $options['symbols'] ?? true;
+
+    $chars = '';
+    if ($uppercase) $chars .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if ($lowercase) $chars .= 'abcdefghijklmnopqrstuvwxyz';
+    if ($numbers) $chars .= '0123456789';
+    if ($symbols) $chars .= '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+    if ($chars === '') $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+    $password = '';
+    $max = strlen($chars) - 1;
+    for ($i = 0; $i < $length; $i++) {
+        $password .= $chars[random_int(0, $max)];
+    }
+    return $password;
+}
+
+/**
+ * Ensure password tables exist
+ */
+function ensurePasswordTablesExist($mysqli) {
+    $statements = [
+        "CREATE TABLE IF NOT EXISTS password_categories (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            color VARCHAR(20) DEFAULT '#6366f1',
+            is_deleted TINYINT(1) DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE KEY unique_pwd_cat_user (user_id, name),
+            INDEX idx_pc_user_id (user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+        "CREATE TABLE IF NOT EXISTS saved_passwords (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            username VARCHAR(255) DEFAULT NULL,
+            encrypted_password TEXT NOT NULL,
+            url VARCHAR(500) DEFAULT NULL,
+            notes TEXT DEFAULT NULL,
+            category_id INT DEFAULT NULL,
+            is_favorite TINYINT(1) DEFAULT 0,
+            is_deleted TINYINT(1) DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (category_id) REFERENCES password_categories(id) ON DELETE SET NULL,
+            INDEX idx_sp_user_id (user_id, is_deleted),
+            INDEX idx_sp_category (category_id),
+            INDEX idx_sp_favorite (user_id, is_favorite)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    ];
+    foreach ($statements as $statement) {
+        if (!$mysqli->query($statement)) {
+            logError("Password table creation failed: " . $mysqli->error, 'SQL_ERROR');
+        }
+    }
+}
+
+/**
+ * Log password activity
+ */
+function logPasswordActivity($mysqli, $user_id, $password_id, $action, $description) {
+    ensurePasswordTablesExist($mysqli);
+    if (tableExists($mysqli, 'activity_logs')) {
+        $stmt = safePrepare($mysqli, "INSERT INTO activity_logs (user_id, action, entity_type, entity_id, description, ip_address, user_agent) VALUES (?, ?, 'password', ?, ?, ?, ?)");
+        if ($stmt) {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $stmt->bind_param('isisss', $user_id, $action, $password_id, $description, $ip, $ua);
+            $stmt->execute();
+        }
+    }
+}
+
+/**
+ * Get password categories for a user
+ */
+function getPasswordCategories($mysqli, $user_id) {
+    ensurePasswordTablesExist($mysqli);
+    $stmt = safePrepare($mysqli, "SELECT id, name, color FROM password_categories WHERE user_id = ? AND is_deleted = 0 ORDER BY name ASC");
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $categories = [];
+    while ($row = $result->fetch_assoc()) {
+        $categories[] = $row;
+    }
+    return $categories;
+}
+
+/**
+ * Save password handler (create/update)
+ */
+function savePasswordHandler($mysqli, $user_id, $post, $encryptionKey) {
+    ensurePasswordTablesExist($mysqli);
+    $title = trim($post['title'] ?? '');
+    if ($title === '') {
+        return ['success' => false, 'message' => 'Title is required.'];
+    }
+
+    $passwordId = !empty($post['password_id']) ? (int) $post['password_id'] : 0;
+    $username = trim($post['username'] ?? '');
+    $plainPassword = $post['password'] ?? '';
+    $url = trim($post['url'] ?? '');
+    $notes = trim($post['notes'] ?? '');
+    $categoryId = !empty($post['category_id']) ? (int) $post['category_id'] : null;
+    $isFavorite = !empty($post['is_favorite']) ? 1 : 0;
+
+    // Validate category
+    if ($categoryId !== null) {
+        $catStmt = safePrepare($mysqli, 'SELECT id FROM password_categories WHERE id = ? AND user_id = ? AND is_deleted = 0');
+        $catStmt->bind_param('ii', $categoryId, $user_id);
+        $catStmt->execute();
+        if ($catStmt->get_result()->num_rows === 0) {
+            $categoryId = null;
+        }
+    }
+
+    if ($passwordId > 0) {
+        // Update - only encrypt if new password provided
+        if ($plainPassword !== '') {
+            $encrypted = encryptPassword($plainPassword, $encryptionKey);
+            $stmt = safePrepare($mysqli, "UPDATE saved_passwords SET title = ?, username = ?, encrypted_password = ?, url = ?, notes = ?, category_id = ?, is_favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+            $stmt->bind_param('sssissiiii', $title, $username, $encrypted, $url, $notes, $categoryId, $isFavorite, $passwordId, $user_id);
+        } else {
+            $stmt = safePrepare($mysqli, "UPDATE saved_passwords SET title = ?, username = ?, url = ?, notes = ?, category_id = ?, is_favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+            $stmt->bind_param('sssiiiiii', $title, $username, $url, $notes, $categoryId, $isFavorite, $passwordId, $user_id);
+        }
+        if ($stmt->execute()) {
+            logPasswordActivity($mysqli, $user_id, $passwordId, 'password_updated', 'Password updated: ' . $title);
+            return ['success' => true, 'message' => 'Password updated successfully.'];
+        }
+        return ['success' => false, 'message' => 'Unable to update password.'];
+    }
+
+    // Create new
+    if ($plainPassword === '') {
+        return ['success' => false, 'message' => 'Password is required.'];
+    }
+
+    $encrypted = encryptPassword($plainPassword, $encryptionKey);
+    $stmt = safePrepare($mysqli, "INSERT INTO saved_passwords (user_id, title, username, encrypted_password, url, notes, category_id, is_favorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('isssssii', $user_id, $title, $username, $encrypted, $url, $notes, $categoryId, $isFavorite);
+    if ($stmt->execute()) {
+        $newId = $stmt->insert_id;
+        logPasswordActivity($mysqli, $user_id, $newId, 'password_created', 'Password created: ' . $title);
+        return ['success' => true, 'message' => 'Password saved successfully.', 'password_id' => $newId];
+    }
+    return ['success' => false, 'message' => 'Unable to save password.'];
+}
+
+/**
+ * Get all passwords for a user (without decrypting)
+ */
+function getPasswordsHandler($mysqli, $user_id, $post) {
+    ensurePasswordTablesExist($mysqli);
+    $categoryId = !empty($post['category_id']) ? (int) $post['category_id'] : null;
+    $search = trim($post['search'] ?? '');
+    $favoritesOnly = !empty($post['favorites_only']);
+
+    $sql = "SELECT sp.*, pc.name AS category_name, pc.color AS category_color 
+            FROM saved_passwords sp 
+            LEFT JOIN password_categories pc ON pc.id = sp.category_id 
+            WHERE sp.user_id = ? AND sp.is_deleted = 0";
+
+    $params = [$user_id];
+    $types = 'i';
+
+    if ($categoryId !== null) {
+        $sql .= " AND sp.category_id = ?";
+        $params[] = $categoryId;
+        $types .= 'i';
+    }
+
+    if ($favoritesOnly) {
+        $sql .= " AND sp.is_favorite = 1";
+    }
+
+    if ($search !== '') {
+        $sql .= " AND (sp.title LIKE ? OR sp.username LIKE ? OR sp.url LIKE ?)";
+        $searchWildcard = '%' . $search . '%';
+        $params[] = $searchWildcard;
+        $params[] = $searchWildcard;
+        $params[] = $searchWildcard;
+        $types .= 'sss';
+    }
+
+    $sql .= " ORDER BY sp.is_favorite DESC, sp.title ASC";
+
+    $stmt = safePrepare($mysqli, $sql);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $passwords = [];
+    while ($row = $result->fetch_assoc()) {
+        // Mask the encrypted password - don't send it to frontend
+        $row['has_password'] = !empty($row['encrypted_password']);
+        unset($row['encrypted_password']);
+        $passwords[] = $row;
+    }
+    return ['success' => true, 'passwords' => $passwords];
+}
+
+/**
+ * Get single password (decrypted)
+ */
+function getPasswordHandler($mysqli, $user_id, $post, $encryptionKey) {
+    ensurePasswordTablesExist($mysqli);
+    $passwordId = !empty($post['password_id']) ? (int) $post['password_id'] : 0;
+
+    $stmt = safePrepare($mysqli, 'SELECT sp.*, pc.name AS category_name, pc.color AS category_color FROM saved_passwords sp LEFT JOIN password_categories pc ON pc.id = sp.category_id WHERE sp.id = ? AND sp.user_id = ? AND sp.is_deleted = 0');
+    $stmt->bind_param('ii', $passwordId, $user_id);
+    $stmt->execute();
+    $password = $stmt->get_result()->fetch_assoc();
+
+    if ($password) {
+        // Decrypt the password
+        $password['password'] = decryptPassword($password['encrypted_password'], $encryptionKey);
+        unset($password['encrypted_password']);
+        return ['success' => true, 'password' => $password];
+    }
+    return ['success' => false, 'message' => 'Password not found.'];
+}
+
+/**
+ * Delete password handler (soft delete)
+ */
+function deletePasswordHandler($mysqli, $user_id, $post) {
+    ensurePasswordTablesExist($mysqli);
+    $passwordId = !empty($post['password_id']) ? (int) $post['password_id'] : 0;
+
+    $stmt = safePrepare($mysqli, "UPDATE saved_passwords SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+    $stmt->bind_param('ii', $passwordId, $user_id);
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        logPasswordActivity($mysqli, $user_id, $passwordId, 'password_deleted', 'Password deleted');
+        return ['success' => true, 'message' => 'Password deleted.'];
+    }
+    return ['success' => false, 'message' => 'Password not found.'];
+}
+
+/**
+ * Toggle favorite
+ */
+function togglePasswordFavoriteHandler($mysqli, $user_id, $post) {
+    ensurePasswordTablesExist($mysqli);
+    $passwordId = !empty($post['password_id']) ? (int) $post['password_id'] : 0;
+
+    $stmt = safePrepare($mysqli, "UPDATE saved_passwords SET is_favorite = NOT is_favorite, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+    $stmt->bind_param('ii', $passwordId, $user_id);
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        return ['success' => true, 'message' => 'Favorite toggled.'];
+    }
+    return ['success' => false, 'message' => 'Password not found.'];
+}
+
+/**
+ * Bulk password actions
+ */
+function bulkPasswordActionHandler($mysqli, $user_id, $post) {
+    ensurePasswordTablesExist($mysqli);
+    $action = $post['bulk_action'] ?? '';
+    $ids = array_filter(array_map('intval', explode(',', $post['password_ids'] ?? '')));
+
+    if (empty($ids)) {
+        return ['success' => false, 'message' => 'No passwords selected.'];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+    if ($action === 'delete') {
+        $types = str_repeat('i', count($ids)) . 'i';
+        $params = array_merge($ids, [$user_id]);
+        $stmt = safePrepare($mysqli, "UPDATE saved_passwords SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id IN ($placeholders) AND user_id = ?");
+        $stmt->bind_param($types, ...$params);
+        if ($stmt->execute()) {
+            return ['success' => true, 'message' => count($ids) . ' password(s) deleted.'];
+        }
+    }
+
+    return ['success' => false, 'message' => 'Unknown action.'];
+}
+
+/**
+ * Save password category handler
+ */
+function savePasswordCategoryHandler($mysqli, $user_id, $post) {
+    ensurePasswordTablesExist($mysqli);
+    $name = trim($post['name'] ?? '');
+    $color = trim($post['color'] ?? '#6366f1');
+
+    if ($name === '') {
+        return ['success' => false, 'message' => 'Category name is required.'];
+    }
+
+    $catId = !empty($post['category_id']) ? (int) $post['category_id'] : 0;
+
+    if ($catId > 0) {
+        $stmt = safePrepare($mysqli, "UPDATE password_categories SET name = ?, color = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND is_deleted = 0");
+        $stmt->bind_param('ssii', $name, $color, $catId, $user_id);
+        if ($stmt->execute()) {
+            return ['success' => true, 'message' => 'Category updated.'];
+        }
+        return ['success' => false, 'message' => 'Unable to update category.'];
+    }
+
+    // Check duplicate
+    $check = safePrepare($mysqli, "SELECT id FROM password_categories WHERE user_id = ? AND name = ? AND is_deleted = 0");
+    $check->bind_param('is', $user_id, $name);
+    $check->execute();
+    if ($check->get_result()->num_rows > 0) {
+        return ['success' => false, 'message' => 'Category already exists.'];
+    }
+
+    $stmt = safePrepare($mysqli, "INSERT INTO password_categories (user_id, name, color) VALUES (?, ?, ?)");
+    $stmt->bind_param('iss', $user_id, $name, $color);
+    if ($stmt->execute()) {
+        return ['success' => true, 'message' => 'Category created.', 'category_id' => $stmt->insert_id];
+    }
+    return ['success' => false, 'message' => 'Unable to create category.'];
+}
+
+/**
+ * Delete password category handler
+ */
+function deletePasswordCategoryHandler($mysqli, $user_id, $post) {
+    ensurePasswordTablesExist($mysqli);
+    $catId = !empty($post['category_id']) ? (int) $post['category_id'] : 0;
+
+    $stmt = safePrepare($mysqli, "UPDATE password_categories SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $catId, $user_id);
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        // Move passwords in this category to uncategorized
+        $update = safePrepare($mysqli, "UPDATE saved_passwords SET category_id = NULL WHERE category_id = ? AND user_id = ?");
+        $update->bind_param('ii', $catId, $user_id);
+        $update->execute();
+        return ['success' => true, 'message' => 'Category deleted.'];
+    }
+    return ['success' => false, 'message' => 'Category not found.'];
+}
+
+/**
+ * Get password categories handler
+ */
+function getPasswordCategoriesHandler($mysqli, $user_id, $post) {
+    return ['success' => true, 'categories' => getPasswordCategories($mysqli, $user_id)];
+}
+
+/**
+ * Get password counts for a user
+ */
+function getPasswordCounts($mysqli, $user_id) {
+    ensurePasswordTablesExist($mysqli);
+    $stmt = safePrepare($mysqli, "SELECT COUNT(*) as total, SUM(is_favorite = 1) as favorites FROM saved_passwords WHERE user_id = ? AND is_deleted = 0");
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return [
+        'total' => (int)($row['total'] ?? 0),
+        'favorites' => (int)($row['favorites'] ?? 0)
+    ];
+}
