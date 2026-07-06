@@ -69,7 +69,8 @@
     <script src="<?php echo SITE_URL; ?>/assets/js/toast.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/modal.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/sidebar.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/chart.min.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/reminders.js"></script>
     
     <?php if (isset($additional_js)) { foreach ($additional_js as $js) { ?>
     <script src="<?php echo SITE_URL; ?>/assets/js/<?php echo $js; ?>"></script>

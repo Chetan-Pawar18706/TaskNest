@@ -164,6 +164,15 @@ $navClass = function ($page) use ($current_page) {
                 <h3 class="nav-section-title">Utilities</h3>
             </button>
             <ul class="nav-menu">
+                <li class="nav-item <?php echo $navClass('reminders.php') || $navClass('index.php') && basename($_SERVER['PHP_SELF']) === 'index.php' && strpos($_SERVER['PHP_SELF'], 'reminders') !== false ? 'active' : ''; ?>">
+                    <a href="<?php echo SITE_URL; ?>/reminders.php" class="nav-link">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="nav-label">Reminders</span>
+                    </a>
+                </li>
                 <li class="nav-item <?php echo $navClass('passwords.php'); ?>">
                     <a href="<?php echo SITE_URL; ?>/passwords.php" class="nav-link">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

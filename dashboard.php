@@ -15,6 +15,9 @@ $user = $auth->getUser();
 $counts = getDashboardCounts($mysqli, $user_id);
 $recent_activities = getRecentActivity($mysqli, $user_id, 10);
 $reminders = getUpcomingReminders($mysqli, $user_id, 7);
+$bellReminders = getUpcomingRemindersForBell($mysqli, $user_id);
+$bellOverdue = getOverdueReminders($mysqli, $user_id);
+$bellCount = getReminderCountForBell($mysqli, $user_id);
 $expenseChart = getIncomeExpenseChartData($mysqli, $user_id, 6);
 $completionChart = getTaskCompletionData($mysqli, $user_id);
 $habitChart = getHabitProgressData($mysqli, $user_id);
@@ -207,14 +210,23 @@ include 'includes/header.php';
                     <h2 class="dashboard-panel-title">Upcoming Reminders</h2>
                     <p class="dashboard-panel-subtitle">Items due soon.</p>
                 </div>
+                <a href="<?php echo SITE_URL; ?>/modules/reminders/reminders-add.php" class="btn btn-secondary btn-sm" style="font-size:0.8rem;height:30px;">+ Add</a>
             </div>
-            <?php if (!empty($reminders)): ?>
+            <?php if (!empty($bellReminders) || !empty($bellOverdue)): ?>
                 <div class="reminder-list">
-                    <?php foreach ($reminders as $item): ?>
-                        <div class="reminder-item">
+                    <?php foreach ($bellOverdue as $item): ?>
+                        <div class="reminder-item" style="border-left: 3px solid var(--color-danger);">
+                            <div class="reminder-content">
+                                <p style="font-weight:600;color:var(--color-danger);"><?php echo htmlspecialchars($item['title']); ?></p>
+                                <div class="reminder-meta">Overdue - <?php echo htmlspecialchars($item['reminder_date'] . ' ' . substr($item['reminder_time'], 0, 5)); ?></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php foreach ($bellReminders as $item): ?>
+                        <div class="reminder-item" style="border-left: 3px solid <?php echo $item['urgency'] === 'urgent' ? 'var(--color-danger)' : ($item['urgency'] === 'soon' ? 'var(--color-warning)' : 'var(--color-info)'); ?>;">
                             <div class="reminder-content">
                                 <p><?php echo htmlspecialchars($item['title']); ?></p>
-                                <div class="reminder-meta"><?php echo htmlspecialchars($item['label']); ?> • <?php echo htmlspecialchars($item['due_date']); ?></div>
+                                <div class="reminder-meta"><?php echo htmlspecialchars($item['reminder_date'] . ' ' . substr($item['reminder_time'], 0, 5)); ?> - <strong><?php echo htmlspecialchars($item['time_label']); ?></strong></div>
                             </div>
                         </div>
                     <?php endforeach; ?>

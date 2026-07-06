@@ -359,6 +359,191 @@ body[data-theme="dark"] .moon-icon {
 }
 
 /* ============================================
+   BELL DROPDOWN (Global - needed on all pages)
+   ============================================ */
+.navbar-notifications-wrapper {
+    position: relative;
+}
+.bell-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: -8px;
+    width: 380px;
+    max-height: 500px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    overflow: hidden;
+    display: none;
+}
+.bell-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 18px;
+    width: 12px;
+    height: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-right: none;
+    transform: rotate(45deg);
+    z-index: 1;
+}
+.bell-dropdown.show { display: block; animation: bellSlideIn 0.2s ease; }
+@keyframes bellSlideIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.bell-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.bell-dropdown-header h3 {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+.bell-dropdown-header .bell-header-count {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-normal);
+    margin-left: 6px;
+}
+
+.bell-dropdown-list {
+    max-height: 380px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+.bell-dropdown-list::-webkit-scrollbar { width: 5px; }
+.bell-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+.bell-dropdown-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+.bell-dropdown-list::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+.bell-dropdown-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+}
+.bell-dropdown-item:hover { background: var(--bg-tertiary); }
+.bell-dropdown-item:active { transform: scale(0.99); }
+.bell-dropdown-item:last-child { border-bottom: none; }
+.bell-dropdown-item.overdue-item { background: rgba(239, 68, 68, 0.04); }
+.bell-dropdown-item.overdue-item:hover { background: rgba(239, 68, 68, 0.08); }
+
+.bell-item-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+}
+.bell-item-dot.urgent { background: var(--color-danger); box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+.bell-item-dot.soon { background: var(--color-warning); box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+.bell-item-dot.normal { background: var(--color-info); }
+.bell-item-dot.overdue { background: var(--color-danger); animation: bellPulse 1.5s infinite; }
+
+@keyframes bellPulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+    50% { opacity: 0.5; box-shadow: 0 0 4px rgba(239, 68, 68, 0.2); }
+}
+
+.bell-item-content { flex: 1; min-width: 0; }
+.bell-item-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+.bell-item-time {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.bell-item-time svg { width: 11px; height: 11px; opacity: 0.6; }
+
+.bell-item-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-weight: var(--font-weight-bold);
+    flex-shrink: 0;
+    margin-top: 3px;
+    white-space: nowrap;
+}
+.bell-item-badge.urgent { background: rgba(239, 68, 68, 0.12); color: var(--color-danger); }
+.bell-item-badge.soon { background: rgba(245, 158, 11, 0.12); color: var(--color-warning); }
+.bell-item-badge.overdue { background: rgba(239, 68, 68, 0.18); color: var(--color-danger); }
+.bell-item-badge.normal { background: rgba(59, 130, 246, 0.1); color: var(--color-info); }
+
+.bell-dropdown-empty {
+    padding: 48px 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+.bell-dropdown-empty svg { display: block; margin: 0 auto 12px; }
+
+.bell-dropdown-footer {
+    padding: 10px 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+    background: var(--bg-secondary);
+    position: sticky;
+    bottom: 0;
+}
+.bell-dropdown-footer a {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    transition: color 0.15s;
+}
+.bell-dropdown-footer a:hover { color: var(--color-primary-dark); }
+
+.navbar-icon-btn.bell-active {
+    color: var(--color-primary);
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: var(--radius-lg);
+    outline: none !important;
+}
+
+.navbar-notifications-wrapper * {
+    outline: none !important;
+}
+.navbar-notifications-wrapper *:focus,
+.navbar-notifications-wrapper *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* ============================================
    USER MENU
    ============================================ */
 
@@ -1546,4 +1731,11 @@ input[type="datetime-local"].form-control {
 
 .tfa-lock-icon + h1 {
     font-size: 1.25rem;
+}
+
+/* Bell responsive */
+@media (max-width: 768px) {
+    .bell-dropdown { width: calc(100vw - 32px); right: -80px; }
+    .bell-dropdown::before { right: 82px; }
+    .bell-dropdown-item { padding: 10px 14px; }
 }

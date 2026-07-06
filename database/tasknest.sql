@@ -442,3 +442,28 @@ CREATE TABLE IF NOT EXISTS saved_passwords (
     INDEX idx_sp_category (category_id),
     INDEX idx_sp_favorite (user_id, is_favorite)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- TaskNest - Reminders System
+-- Run this SQL to create the reminders table
+
+CREATE TABLE IF NOT EXISTS reminders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    reminder_date DATE NOT NULL,
+    reminder_time TIME NOT NULL,
+    repeat_type ENUM('none', 'daily', 'weekly', 'monthly', 'yearly') DEFAULT 'none',
+    repeat_days VARCHAR(50),
+    priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    category VARCHAR(100),
+    is_active TINYINT(1) DEFAULT 1,
+    email_sent TINYINT(1) DEFAULT 0,
+    last_notified DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_date (user_id, reminder_date, is_active),
+    INDEX idx_reminder_time (reminder_date, reminder_time, is_active, email_sent)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -36,6 +36,17 @@ function safePrepare($mysqli, $sql) {
     return $stmt;
 }
 
+function logActivity($user_id, $action, $entity_type, $entity_id, $description) {
+    global $mysqli;
+    if (!$mysqli) return;
+    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '';
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $stmt = $mysqli->prepare("INSERT INTO activity_logs (user_id, action, entity_type, entity_id, description, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    if (!$stmt) return;
+    $stmt->bind_param("ississs", $user_id, $action, $entity_type, $entity_id, $description, $ip_address, $user_agent);
+    $stmt->execute();
+}
+
 /**
  * Sanitize input to prevent XSS
  */
@@ -4010,4 +4021,326 @@ function getPasswordCounts($mysqli, $user_id) {
         'total' => (int)($row['total'] ?? 0),
         'favorites' => (int)($row['favorites'] ?? 0)
     ];
+}
+
+/* ============================================
+   REMINDER FUNCTIONS
+   ============================================ */
+
+function ensureReminderTableExists($mysqli) {
+    if (tableExists($mysqli, 'reminders')) return;
+    $sql = "CREATE TABLE IF NOT EXISTS reminders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        reminder_date DATE NOT NULL,
+        reminder_time TIME NOT NULL,
+        repeat_type ENUM('none', 'daily', 'weekly', 'monthly', 'yearly') DEFAULT 'none',
+        repeat_days VARCHAR(50),
+        priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+        category VARCHAR(100),
+        is_active TINYINT(1) DEFAULT 1,
+        email_sent TINYINT(1) DEFAULT 0,
+        last_notified DATETIME,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_user_date (user_id, reminder_date, is_active),
+        INDEX idx_reminder_time (reminder_date, reminder_time, is_active, email_sent)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    $mysqli->query($sql);
+}
+
+function getReminders($mysqli, $user_id, $filters = []) {
+    $reminders = [];
+    $where = "r.user_id = ? AND r.is_active = 1";
+    $params = [$user_id];
+    $types = 'i';
+
+    if (!empty($filters['date_from'])) {
+        $where .= " AND r.reminder_date >= ?";
+        $params[] = $filters['date_from'];
+        $types .= 's';
+    }
+    if (!empty($filters['date_to'])) {
+        $where .= " AND r.reminder_date <= ?";
+        $params[] = $filters['date_to'];
+        $types .= 's';
+    }
+    if (!empty($filters['priority'])) {
+        $where .= " AND r.priority = ?";
+        $params[] = $filters['priority'];
+        $types .= 's';
+    }
+    if (!empty($filters['category'])) {
+        $where .= " AND r.category = ?";
+        $params[] = $filters['category'];
+        $types .= 's';
+    }
+    if (!empty($filters['search'])) {
+        $where .= " AND (r.title LIKE ? OR r.description LIKE ?)";
+        $search = '%' . $filters['search'] . '%';
+        $params[] = $search;
+        $params[] = $search;
+        $types .= 'ss';
+    }
+
+    $orderBy = $filters['order'] ?? 'ASC';
+    $limit = $filters['limit'] ?? 50;
+
+    $sql = "SELECT r.* FROM reminders r WHERE $orderBy ORDER BY r.reminder_date $orderBy, r.reminder_time $orderBy LIMIT ?";
+    $sql = "SELECT r.* FROM reminders r WHERE $where ORDER BY r.reminder_date ASC, r.reminder_time ASC LIMIT ?";
+    $params[] = $limit;
+    $types .= 'i';
+
+    $stmt = safePrepare($mysqli, $sql);
+    if (!$stmt) return [];
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $reminders[] = $row;
+    }
+    return $reminders;
+}
+
+function getReminderById($mysqli, $user_id, $reminder_id) {
+    $stmt = safePrepare($mysqli, 'SELECT * FROM reminders WHERE id = ? AND user_id = ?');
+    if (!$stmt) return null;
+    $stmt->bind_param('ii', $reminder_id, $user_id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+}
+
+function saveReminder($mysqli, $user_id, $data) {
+    $id = $data['reminder_id'] ?? 0;
+    $title = trim($data['title'] ?? '');
+    $description = trim($data['description'] ?? '');
+    $reminder_date = $data['reminder_date'] ?? '';
+    $reminder_time = $data['reminder_time'] ?? '';
+    $repeat_type = $data['repeat_type'] ?? 'none';
+    $repeat_days = $data['repeat_days'] ?? '';
+    $priority = $data['priority'] ?? 'medium';
+    $category = trim($data['category'] ?? '');
+
+    if (empty($title)) return ['success' => false, 'message' => 'Title is required.'];
+    if (empty($reminder_date)) return ['success' => false, 'message' => 'Date is required.'];
+    if (empty($reminder_time)) return ['success' => false, 'message' => 'Time is required.'];
+
+    if ($id > 0) {
+        $stmt = safePrepare($mysqli, 'UPDATE reminders SET title=?, description=?, reminder_date=?, reminder_time=?, repeat_type=?, repeat_days=?, priority=?, category=? WHERE id=? AND user_id=?');
+        if (!$stmt) return ['success' => false, 'message' => 'Database error.'];
+        $stmt->bind_param('ssssssssii', $title, $description, $reminder_date, $reminder_time, $repeat_type, $repeat_days, $priority, $category, $id, $user_id);
+    } else {
+        $stmt = safePrepare($mysqli, 'INSERT INTO reminders (user_id, title, description, reminder_date, reminder_time, repeat_type, repeat_days, priority, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        if (!$stmt) return ['success' => false, 'message' => 'Database error.'];
+        $stmt->bind_param('issssssss', $user_id, $title, $description, $reminder_date, $reminder_time, $repeat_type, $repeat_days, $priority, $category);
+    }
+
+    if ($stmt->execute()) {
+        $saved_id = $id > 0 ? $id : $stmt->insert_id;
+        logActivity($user_id, $id > 0 ? 'updated' : 'created', 'reminder', $saved_id, $title);
+        return ['success' => true, 'message' => $id > 0 ? 'Reminder updated.' : 'Reminder created.', 'id' => $saved_id];
+    }
+    return ['success' => false, 'message' => 'Failed to save reminder.'];
+}
+
+function deleteReminder($mysqli, $user_id, $reminder_id) {
+    $stmt = safePrepare($mysqli, 'DELETE FROM reminders WHERE id = ? AND user_id = ?');
+    if (!$stmt) return ['success' => false, 'message' => 'Database error.'];
+    $stmt->bind_param('ii', $reminder_id, $user_id);
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        logActivity($user_id, 'deleted', 'reminder', $reminder_id, 'Reminder deleted');
+        return ['success' => true, 'message' => 'Reminder deleted.'];
+    }
+    return ['success' => false, 'message' => 'Reminder not found.'];
+}
+
+function toggleReminder($mysqli, $user_id, $reminder_id) {
+    $stmt = safePrepare($mysqli, 'UPDATE reminders SET is_active = NOT is_active WHERE id = ? AND user_id = ?');
+    if (!$stmt) return ['success' => false];
+    $stmt->bind_param('ii', $reminder_id, $user_id);
+    $stmt->execute();
+    return ['success' => true];
+}
+
+function getUpcomingRemindersForBell($mysqli, $user_id) {
+    $reminders = [];
+    $now = date('Y-m-d H:i:s');
+    $limit = date('Y-m-d', strtotime('+7 days'));
+
+    $sql = "SELECT id, title, description, reminder_date, reminder_time, priority, category,
+            TIMESTAMPDIFF(MINUTE, NOW(), CONCAT(reminder_date, ' ', reminder_time)) as minutes_until
+            FROM reminders
+            WHERE user_id = ? AND is_active = 1
+            AND (reminder_date > CURDATE() OR (reminder_date = CURDATE() AND reminder_time >= CURTIME()))
+            AND reminder_date <= ?
+            ORDER BY reminder_date ASC, reminder_time ASC
+            LIMIT 10";
+
+    $stmt = safePrepare($mysqli, $sql);
+    if (!$stmt) return [];
+    $stmt->bind_param('is', $user_id, $limit);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $minutes = (int)$row['minutes_until'];
+        if ($minutes <= 60) {
+            $row['time_label'] = $minutes <= 0 ? 'Now' : $minutes . ' min';
+            $row['urgency'] = 'urgent';
+        } elseif ($minutes <= 180) {
+            $row['time_label'] = round($minutes / 60, 1) . ' hrs';
+            $row['urgency'] = 'soon';
+        } else {
+            $hours = round($minutes / 60);
+            $row['time_label'] = $hours . ' hrs';
+            $row['urgency'] = 'normal';
+        }
+        $reminders[] = $row;
+    }
+    return $reminders;
+}
+
+function getReminderCountForBell($mysqli, $user_id) {
+    $stmt = safePrepare($mysqli, "SELECT COUNT(*) as cnt FROM reminders WHERE user_id = ? AND is_active = 1 AND (reminder_date > CURDATE() OR (reminder_date = CURDATE() AND reminder_time >= CURTIME())) AND reminder_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)");
+    if (!$stmt) return 0;
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return (int)($row['cnt'] ?? 0);
+}
+
+function getOverdueReminders($mysqli, $user_id) {
+    $reminders = [];
+    $stmt = safePrepare($mysqli, "SELECT id, title, reminder_date, reminder_time, priority FROM reminders WHERE user_id = ? AND is_active = 1 AND CONCAT(reminder_date, ' ', reminder_time) < NOW() ORDER BY reminder_date ASC, reminder_time ASC LIMIT 5");
+    if (!$stmt) return [];
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $reminders[] = $row;
+    }
+    return $reminders;
+}
+
+function getRemindersNeedingEmail($mysqli) {
+    $reminders = [];
+    $stmt = safePrepare($mysqli, "SELECT r.*, u.email, u.first_name FROM reminders r JOIN users u ON r.user_id = u.id WHERE r.is_active = 1 AND r.email_sent = 0 AND CONCAT(r.reminder_date, ' ', r.reminder_time) <= NOW() AND CONCAT(r.reminder_date, ' ', r.reminder_time) > DATE_SUB(NOW(), INTERVAL 1 HOUR) LIMIT 50");
+    if (!$stmt) return [];
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $reminders[] = $row;
+    }
+    return $reminders;
+}
+
+function markReminderEmailSent($mysqli, $reminder_id) {
+    $stmt = safePrepare($mysqli, 'UPDATE reminders SET email_sent = 1, last_notified = NOW() WHERE id = ?');
+    if (!$stmt) return false;
+    $stmt->bind_param('i', $reminder_id);
+    return $stmt->execute();
+}
+
+function handleReminderRepeats($mysqli, $reminder) {
+    if ($reminder['repeat_type'] === 'none') return;
+    $next_date = $reminder['reminder_date'];
+    switch ($reminder['repeat_type']) {
+        case 'daily': $next_date = date('Y-m-d', strtotime($next_date . ' +1 day')); break;
+        case 'weekly': $next_date = date('Y-m-d', strtotime($next_date . ' +1 week')); break;
+        case 'monthly': $next_date = date('Y-m-d', strtotime($next_date . ' +1 month')); break;
+        case 'yearly': $next_date = date('Y-m-d', strtotime($next_date . ' +1 year')); break;
+    }
+    $stmt = safePrepare($mysqli, 'INSERT INTO reminders (user_id, title, description, reminder_date, reminder_time, repeat_type, repeat_days, priority, category, is_active, email_sent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0) ON DUPLICATE KEY UPDATE reminder_date = VALUES(reminder_date)');
+    $stmt->bind_param('issssssss', $reminder['user_id'], $reminder['title'], $reminder['description'], $next_date, $reminder['reminder_time'], $reminder['repeat_type'], $reminder['repeat_days'], $reminder['priority'], $reminder['category']);
+    $stmt->execute();
+}
+
+function sendReminderEmail($to, $first_name, $reminder) {
+    $subject = SITE_NAME . " - Reminder: " . $reminder['title'];
+    $datetime = date('M d, Y \a\t g:i A', strtotime($reminder['reminder_date'] . ' ' . $reminder['reminder_time']));
+    $priority_label = ucfirst($reminder['priority']);
+    $priority_color = $reminder['priority'] === 'high' ? '#ef4444' : ($reminder['priority'] === 'medium' ? '#f59e0b' : '#10b981');
+
+    $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+    <body style="margin:0;padding:0;background:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 20px;">
+    <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+      <tr><td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px;text-align:center;">
+        <h1 style="color:#ffffff;margin:0;font-size:24px;">' . SITE_NAME . ' Reminder</h1>
+      </td></tr>
+      <tr><td style="padding:40px 32px;">
+        <h2 style="color:#1f2937;margin:0 0 16px;font-size:20px;">Hi ' . htmlspecialchars($first_name) . ',</h2>
+        <p style="color:#4b5563;margin:0 0 24px;line-height:1.6;">This is a reminder for:</p>
+        <div style="background:#f9fafb;border-left:4px solid ' . $priority_color . ';padding:16px 20px;border-radius:0 8px 8px 0;margin-bottom:24px;">
+          <h3 style="color:#1f2937;margin:0 0 8px;font-size:18px;">' . htmlspecialchars($reminder['title']) . '</h3>
+          <p style="color:#6b7280;margin:0 0 4px;font-size:14px;">' . $datetime . '</p>
+          <p style="color:' . $priority_color . ';margin:0;font-size:13px;font-weight:600;">' . $priority_label . ' Priority</p>
+          ' . (!empty($reminder['description']) ? '<p style="color:#4b5563;margin:12px 0 0;font-size:14px;">' . htmlspecialchars($reminder['description']) . '</p>' : '') . '
+        </div>
+        <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+          <tr><td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;">
+            <a href="' . SITE_URL . '/reminders.php" style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;">View Reminder</a>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="background:#f9fafb;padding:24px 32px;text-align:center;border-top:1px solid #e5e7eb;">
+        <p style="color:#9ca3af;margin:0;font-size:12px;">TaskNest Reminder System</p>
+      </td></tr>
+    </table></td></tr></table></body></html>';
+
+    return sendEmail($to, $subject, $html);
+}
+
+function getReminderCategories($mysqli, $user_id) {
+    $categories = [];
+    $stmt = safePrepare($mysqli, "SELECT DISTINCT category FROM reminders WHERE user_id = ? AND category != '' AND is_active = 1 ORDER BY category ASC");
+    if (!$stmt) return [];
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $categories[] = $row['category'];
+    }
+    return $categories;
+}
+
+function getReminderCounts($mysqli, $user_id) {
+    $counts = ['total' => 0, 'today' => 0, 'upcoming' => 0, 'overdue' => 0];
+    $today = date('Y-m-d');
+
+    $stmt = safePrepare($mysqli, "SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN reminder_date = ? THEN 1 ELSE 0 END) as today,
+        SUM(CASE WHEN reminder_date > ? THEN 1 ELSE 0 END) as upcoming,
+        SUM(CASE WHEN CONCAT(reminder_date, ' ', reminder_time) < NOW() THEN 1 ELSE 0 END) as overdue
+        FROM reminders WHERE user_id = ? AND is_active = 1");
+    if (!$stmt) return $counts;
+    $stmt->bind_param('ssi', $today, $today, $user_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return [
+        'total' => (int)($row['total'] ?? 0),
+        'today' => (int)($row['today'] ?? 0),
+        'upcoming' => (int)($row['upcoming'] ?? 0),
+        'overdue' => (int)($row['overdue'] ?? 0)
+    ];
+}
+
+function processPendingReminderEmails($mysqli) {
+    $reminders = getRemindersNeedingEmail($mysqli);
+    $sent = 0;
+    foreach ($reminders as $r) {
+        $result = sendReminderEmail($r['email'], $r['first_name'], $r);
+        if ($result['success']) {
+            markReminderEmailSent($mysqli, $r['id']);
+            $sent++;
+        }
+        if ($r['repeat_type'] !== 'none') {
+            handleReminderRepeats($mysqli, $r);
+        }
+    }
+    return $sent;
 }
