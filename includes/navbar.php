@@ -4,7 +4,10 @@
  */
 $user = $auth->getUser();
 $avatar_url = $user['avatar_url'] ?? '';
-if (empty($avatar_url)) {
+if (!empty($avatar_url) && strpos($avatar_url, 'http') !== 0) {
+    $avatar_url = SITE_URL . '/' . ltrim($avatar_url, '/');
+}
+if (empty($avatar_url) || $avatar_url === SITE_URL . '/') {
     $avatar_url = SITE_URL . '/assets/images/default-avatar.svg';
 }
 ?>

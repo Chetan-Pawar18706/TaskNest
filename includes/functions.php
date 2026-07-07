@@ -3437,6 +3437,39 @@ function getAdminStats($mysqli) {
     return $stats;
 }
 
+function getAdminChartData($mysqli) {
+    $data = ['registrations' => ['labels' => [], 'counts' => []], 'modules' => ['labels' => [], 'counts' => []]];
+
+    $stmt = safePrepare($mysqli, "SELECT DATE_FORMAT(created_at, '%b %Y') AS label, COUNT(*) AS total FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH) GROUP BY YEAR(created_at), MONTH(created_at), label ORDER BY MIN(created_at) ASC");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $data['registrations']['labels'][] = $row['label'];
+        $data['registrations']['counts'][] = (int) $row['total'];
+    }
+
+    $moduleMap = [
+        'tasks' => 'Tasks', 'notes' => 'Notes', 'expenses' => 'Expenses',
+        'documents' => 'Documents', 'habits' => 'Habits', 'goals' => 'Goals',
+        'shopping' => 'Shopping', 'borrow_items' => 'Borrow/Lend', 'reminders' => 'Reminders', 'feedback' => 'Feedback'
+    ];
+    foreach ($moduleMap as $table => $label) {
+        if (tableExists($mysqli, $table)) {
+            $col = ($table === 'tasks' || $table === 'notes' || $table === 'expenses' || $table === 'documents') ? 'is_deleted' : 'id';
+            $where = ($table === 'tasks' || $table === 'notes' || $table === 'expenses' || $table === 'documents') ? " WHERE is_deleted = 0" : "";
+            $stmt = safePrepare($mysqli, "SELECT COUNT(*) AS total FROM {$table}{$where}");
+            $stmt->execute();
+            $total = (int) ($stmt->get_result()->fetch_assoc()['total'] ?? 0);
+            if ($total > 0) {
+                $data['modules']['labels'][] = $label;
+                $data['modules']['counts'][] = $total;
+            }
+        }
+    }
+
+    return $data;
+}
+
 function getAdminUsers($mysqli, $filters) {
     $conditions = [];
     $params = [];

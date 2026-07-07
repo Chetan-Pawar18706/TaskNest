@@ -21,6 +21,7 @@ $additional_js = ['admin.js'];
 
 $tab = $_GET['tab'] ?? 'dashboard';
 $adminStats = getAdminStats($mysqli);
+$adminChartData = getAdminChartData($mysqli);
 
 $usersData = $activityData = $feedbackData = $settingsData = null;
 
@@ -79,11 +80,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
             <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:1.25rem;">
                 <h3 style="margin:0 0 1rem;font-size:1rem;">User Registrations</h3>
-                <canvas id="adminUserChart" style="max-height:200px;"></canvas>
+                <canvas id="adminUserChart" style="max-height:200px;" data-labels="<?php echo htmlspecialchars(json_encode($adminChartData['registrations']['labels'])); ?>" data-counts="<?php echo htmlspecialchars(json_encode($adminChartData['registrations']['counts'])); ?>"></canvas>
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:1.25rem;">
                 <h3 style="margin:0 0 1rem;font-size:1rem;">Module Usage</h3>
-                <canvas id="adminModuleChart" style="max-height:200px;"></canvas>
+                <canvas id="adminModuleChart" style="max-height:200px;" data-labels="<?php echo htmlspecialchars(json_encode($adminChartData['modules']['labels'])); ?>" data-counts="<?php echo htmlspecialchars(json_encode($adminChartData['modules']['counts'])); ?>"></canvas>
             </div>
         </div>
     </div>
