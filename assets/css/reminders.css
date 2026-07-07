@@ -135,6 +135,7 @@
     font-weight: var(--font-weight-semibold);
 }
 .reminder-time-badge.urgent { background: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+.reminder-time-badge.overdue { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); }
 .reminder-time-badge.soon { background: rgba(245, 158, 11, 0.1); color: var(--color-warning); }
 .reminder-time-badge.normal { background: var(--bg-tertiary); color: var(--text-secondary); }
 

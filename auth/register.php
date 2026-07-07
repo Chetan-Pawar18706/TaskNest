@@ -3,9 +3,9 @@
  * TaskNest - Registration Page
  */
 
-require_once 'config/db.php';
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 requireGuest($auth);
 
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $auth->register($username, $email, $password, $confirm_password, $first_name, $last_name);
         
         if ($result['success']) {
-            redirect(SITE_URL . '/login.php?message=' . urlencode($result['message']));
+            redirect(SITE_URL . '/auth/login.php?message=' . urlencode($result['message']));
         } else {
             $errors = $result['errors'] ?? [];
         }
@@ -157,7 +157,7 @@ $page_title = 'Create Account';
                 <div class="auth-footer">
                     <p>
                         Already have an account? 
-                        <a href="<?php echo SITE_URL; ?>/login.php">Sign in</a>
+                        <a href="<?php echo SITE_URL; ?>/auth/login.php">Sign in</a>
                     </p>
                 </div>
             </div>

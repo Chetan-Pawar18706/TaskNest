@@ -3,9 +3,9 @@
  * TaskNest - Reset Password Page
  */
 
-require_once 'config/db.php';
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 requireGuest($auth);
 
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $auth->resetPassword($token, $new_password, $confirm_password);
             
             if ($result['success']) {
-                redirect(SITE_URL . '/login.php?message=' . urlencode($result['message']));
+                redirect(SITE_URL . '/auth/login.php?message=' . urlencode($result['message']));
             } else {
                 $errors = $result['errors'] ?? [];
             }
@@ -113,7 +113,7 @@ $page_title = 'Reset Password';
                 <div class="auth-footer">
                     <p>
                         Remember your password? 
-                        <a href="<?php echo SITE_URL; ?>/login.php">Sign in</a>
+                        <a href="<?php echo SITE_URL; ?>/auth/login.php">Sign in</a>
                     </p>
                 </div>
                 <?php endif; ?>

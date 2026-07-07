@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/functions.php';
 
 // Must be logged in
 if (!$auth->isLoggedIn()) {
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/auth/login.php');
 }
 
 // Check vault unlock status

@@ -3,9 +3,9 @@
  * TaskNest - Two-Factor Authentication Setup
  */
 
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 requireLogin($auth);
 
 $user_id = $auth->getUserId();
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isEnabled) {
 }
 
 $page_title = 'Two-Factor Authentication';
-include __DIR__ . '/includes/header.php';
+include dirname(__DIR__) . '/includes/header.php';
 ?>
 
 <div class="tfa-container">
@@ -275,4 +275,4 @@ document.getElementById('code')?.addEventListener('input', function(e) {
 });
 </script>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php include dirname(__DIR__) . '/includes/footer.php'; ?>

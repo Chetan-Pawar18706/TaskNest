@@ -253,7 +253,7 @@ class Auth {
         $stmt_reset->bind_param("iss", $user['id'], $token, $expires_at);
         
         if ($stmt_reset->execute()) {
-            $reset_link = SITE_URL . '/reset-password.php?token=' . urlencode($token);
+            $reset_link = SITE_URL . '/auth/reset-password.php?token=' . urlencode($token);
             
             sendPasswordResetEmail($email, $reset_link);
             

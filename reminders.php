@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/functions.php';
 
 if (!$auth->isLoggedIn()) {
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/auth/login.php');
 }
 
 ensureReminderTableExists($mysqli);

@@ -289,7 +289,7 @@ include 'includes/header.php';
                     <?php endif; ?>
                 </div>
                 
-                <a href="<?php echo SITE_URL; ?>/2fa-setup.php" class="btn btn-secondary" style="margin-top:0.5rem;">
+                <a href="<?php echo SITE_URL; ?>/auth/2fa-setup.php" class="btn btn-secondary" style="margin-top:0.5rem;">
                     <?php echo $tfaEnabled ? 'Manage 2FA' : 'Enable 2FA'; ?>
                 </a>
             </div>

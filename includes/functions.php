@@ -102,7 +102,7 @@ function redirect($url) {
  */
 function requireLogin($auth) {
     if (!$auth->isLoggedIn()) {
-        redirect(SITE_URL . '/login.php');
+        redirect(SITE_URL . '/auth/login.php');
     }
 }
 

@@ -1,16 +1,16 @@
 <?php
 /**
- * TaskNest - Login Page
+ * TaskNest - Forgot Password Page
  */
 
-require_once 'config/db.php';
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 requireGuest($auth);
 
+$message = '';
 $errors = [];
-$success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verify CSRF token
@@ -20,36 +20,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($errors)) {
         $email = sanitize($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $remember_me = isset($_POST['remember_me']);
         
-        $result = $auth->login($email, $password, $remember_me);
-        
-        if ($result['success']) {
-            // Check if 2FA is enabled for this user
-            $userId = $auth->getUserId();
-            if ($userId && $auth->isTwoFactorEnabled($userId)) {
-                // Don't fully log in yet - set 2FA pending
-                $_SESSION['user_id'] = null;
-                unset($_SESSION['user_id']);
-                $auth->setTwoFactorPending($userId);
-                redirect(SITE_URL . '/2fa-verify.php');
-            }
-            redirect(SITE_URL . '/dashboard.php');
+        if (!isValidEmail($email)) {
+            $errors[] = 'Please enter a valid email address';
         } else {
-            $errors = $result['errors'] ?? [];
+            $result = $auth->requestPasswordReset($email);
+            // Always show success message for security
+            $message = 'If an account exists for this email, a password reset link has been sent.';
         }
     }
 }
 
-$page_title = 'Login';
+$page_title = 'Forgot Password';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Login to <?php echo SITE_NAME; ?>">
+    <meta name="description" content="Reset your <?php echo SITE_NAME; ?> password">
     <title><?php echo $page_title; ?> - <?php echo SITE_NAME; ?></title>
     
     <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/images/favicon.png">
@@ -66,8 +55,31 @@ $page_title = 'Login';
                 <div class="auth-header">
                     <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="<?php echo SITE_NAME; ?> Logo" class="auth-logo">
                     <h1><?php echo SITE_NAME; ?></h1>
-                    <p>Sign in to your account</p>
+                    <p>Reset your password</p>
                 </div>
+                
+                <?php if ($message): ?>
+                <div class="alert alert-success">
+                    <p><?php echo htmlspecialchars($message); ?></p>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($_SESSION['debug_emails'])): ?>
+                <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin-bottom:20px;">
+                    <p style="font-weight:600;color:#92400e;margin:0 0 8px;">Email could not be sent (local server). Use this link instead:</p>
+                    <?php foreach (array_reverse($_SESSION['debug_emails']) as $email): ?>
+                    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:8px;">
+                        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;"><strong>To:</strong> <?php echo htmlspecialchars($email['to']); ?></p>
+                        <p style="margin:0 0 8px;font-size:13px;"><strong>Reset Link:</strong></p>
+                        <?php if (!empty($email['reset_link'])): ?>
+                        <a href="<?php echo htmlspecialchars($email['reset_link']); ?>" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;margin-bottom:8px;">Click to Reset Password</a>
+                        <p style="margin:8px 0 0;font-size:12px;color:#6b7280;word-break:break-all;">Or copy: <?php echo htmlspecialchars($email['reset_link']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                    <?php unset($_SESSION['debug_emails']); ?>
+                </div>
+                <?php endif; ?>
                 
                 <?php if (!empty($errors)): ?>
                 <div class="alert alert-error">
@@ -91,40 +103,20 @@ $page_title = 'Login';
                             value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
                             class="form-input"
                         >
+                        <small>We'll send a password reset link to this email</small>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            placeholder="••••••••" 
-                            required
-                            class="form-input"
-                        >
-                    </div>
-                    
-                    <div class="form-group checkbox">
-                        <input 
-                            type="checkbox" 
-                            id="remember_me" 
-                            name="remember_me"
-                            class="form-checkbox"
-                        >
-                        <label for="remember_me">Remember me for 7 days</label>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                    <button type="submit" class="btn btn-primary btn-block">Send Reset Link</button>
                 </form>
                 
                 <div class="auth-footer">
                     <p>
-                        Don't have an account? 
-                        <a href="<?php echo SITE_URL; ?>/register.php">Create one</a>
+                        Remember your password? 
+                        <a href="<?php echo SITE_URL; ?>/auth/login.php">Sign in</a>
                     </p>
                     <p>
-                        <a href="<?php echo SITE_URL; ?>/forgot-password.php">Forgot your password?</a>
+                        Don't have an account? 
+                        <a href="<?php echo SITE_URL; ?>/auth/register.php">Create one</a>
                     </p>
                 </div>
             </div>

@@ -42,8 +42,8 @@ $page_title = 'Welcome to TaskNest';
             <li><a href="#reviews">Reviews</a></li>
         </ul>
         <div class="nav-actions">
-            <a href="<?php echo SITE_URL; ?>/login.php" class="btn-hero-secondary nav-btn-sm">Sign In</a>
-            <a href="<?php echo SITE_URL; ?>/register.php" class="btn-hero-primary nav-btn-sm">Get Started</a>
+            <a href="<?php echo SITE_URL; ?>/auth/login.php" class="btn-hero-secondary nav-btn-sm">Sign In</a>
+            <a href="<?php echo SITE_URL; ?>/auth/register.php" class="btn-hero-primary nav-btn-sm">Get Started</a>
         </div>
         <button class="landing-menu-toggle" id="landingMenuToggle" aria-label="Toggle menu">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -88,7 +88,7 @@ $page_title = 'Welcome to TaskNest';
             </p>
 
             <div class="hero-actions">
-                <a href="<?php echo SITE_URL; ?>/register.php" class="btn-hero-primary">
+                <a href="<?php echo SITE_URL; ?>/auth/register.php" class="btn-hero-primary">
                     Start Free
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M5 12h14"></path>
@@ -331,7 +331,7 @@ $page_title = 'Welcome to TaskNest';
             <h2 class="cta-title">Ready to Get Organized?</h2>
             <p class="cta-subtitle">Join thousands of people who use TaskNest to manage their lives. It's free, it's beautiful, it's yours.</p>
             <div class="hero-actions">
-                <a href="<?php echo SITE_URL; ?>/register.php" class="btn-hero-primary">
+                <a href="<?php echo SITE_URL; ?>/auth/register.php" class="btn-hero-primary">
                     Create Free Account
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M5 12h14"></path>
@@ -352,8 +352,8 @@ $page_title = 'Welcome to TaskNest';
             <ul class="footer-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#how-it-works">How It Works</a></li>
-                <li><a href="<?php echo SITE_URL; ?>/login.php">Sign In</a></li>
-                <li><a href="<?php echo SITE_URL; ?>/register.php">Sign Up</a></li>
+                <li><a href="<?php echo SITE_URL; ?>/auth/login.php">Sign In</a></li>
+                <li><a href="<?php echo SITE_URL; ?>/auth/register.php">Sign Up</a></li>
             </ul>
             <div class="footer-divider"></div>
             <p class="footer-copy">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>

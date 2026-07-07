@@ -3,13 +3,13 @@
  * TaskNest - Two-Factor Authentication Verification (Login)
  */
 
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Must have pending 2FA verification
 if (!$auth->isTwoFactorPending()) {
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/auth/login.php');
 }
 
 $errors = [];
@@ -101,7 +101,7 @@ $page_title = 'Two-Factor Verification';
                 
                 <div class="auth-footer">
                     <p>
-                        <a href="<?php echo SITE_URL; ?>/login.php">Back to Login</a>
+                        <a href="<?php echo SITE_URL; ?>/auth/login.php">Back to Login</a>
                     </p>
                 </div>
             </div>
