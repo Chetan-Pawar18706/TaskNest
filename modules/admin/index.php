@@ -32,6 +32,14 @@ if ($tab === 'activity') {
 }
 if ($tab === 'feedback') {
     $feedbackData = getFeedbackList($mysqli, ['status' => $_GET['status'] ?? '', 'page' => max(1, (int) ($_GET['page'] ?? 1))]);
+    // Mark all open feedback as viewed by admin
+    if (!empty($feedbackData['feedback'])) {
+        foreach ($feedbackData['feedback'] as $fb) {
+            if (empty($fb['viewed_by_admin'])) {
+                markFeedbackViewed($mysqli, $fb['id']);
+            }
+        }
+    }
 }
 if ($tab === 'settings') {
     $settingsData = getSiteSettings($mysqli);
@@ -148,7 +156,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="feedback-card" data-feedback-id="<?php echo (int) $fb['id']; ?>">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
                         <h3><?php echo htmlspecialchars($fb['subject']); ?></h3>
-                        <span class="feedback-badge <?php echo htmlspecialchars($fb['status']); ?>"><?php echo ucfirst(str_replace('_', ' ', htmlspecialchars($fb['status']))); ?></span>
+                        <div style="display:flex;gap:0.5rem;align-items:center;">
+                            <?php if (!empty($fb['viewed_by_admin'])): ?>
+                                <span class="feedback-badge viewed" title="Viewed by admin">Viewed</span>
+                            <?php endif; ?>
+                            <span class="feedback-badge <?php echo htmlspecialchars($fb['status']); ?>"><?php echo ucfirst(str_replace('_', ' ', htmlspecialchars($fb['status']))); ?></span>
+                        </div>
                     </div>
                     <p><?php echo htmlspecialchars($fb['message']); ?></p>
                     <div class="feedback-meta">

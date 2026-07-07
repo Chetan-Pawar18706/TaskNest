@@ -1,27 +1,15 @@
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: .4rem;
-    padding: .75rem 1rem;
+/* Component-level button overrides (loaded only on dashboard) */
+.dashboard-page .btn {
     border-radius: 999px;
-    border: 1px solid transparent;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.btn:hover {
-    transform: translateY(-1px);
-}
-
-.btn-primary {
+.dashboard-page .btn-primary {
     background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
     color: white;
     box-shadow: 0 10px 25px rgba(99, 102, 241, 0.24);
 }
 
-.btn-secondary {
+.dashboard-page .btn-secondary {
     background: var(--bg-secondary);
     color: var(--text-primary);
     border-color: var(--border-color);

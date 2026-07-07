@@ -199,8 +199,8 @@ select.form-select {
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); }
 .form-actions { display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color); justify-content: flex-end; }
 
-/* Buttons */
-.btn {
+/* Buttons - scoped to reminders page */
+.reminders-page .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -216,17 +216,17 @@ select.form-select {
     white-space: nowrap;
     line-height: 1.4;
 }
-.btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-.btn-primary { background-color: var(--color-primary); color: var(--color-white); }
-.btn-primary:hover { background-color: var(--color-primary-dark); }
-.btn-primary:active { transform: scale(0.98); }
-.btn-secondary { background-color: transparent; color: var(--text-primary); border-color: var(--border-color); }
-.btn-secondary:hover { background-color: var(--bg-tertiary); border-color: var(--text-tertiary); }
-.btn-danger { background-color: var(--color-danger); color: var(--color-white); }
-.btn-danger:hover { background-color: var(--color-danger-dark); }
-.btn-sm { padding: var(--spacing-xs) var(--spacing-md); font-size: var(--font-size-xs); }
-.btn-icon { padding: 6px; background: none; border: none; cursor: pointer; border-radius: var(--radius-md); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition-fast); }
-.btn-icon:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.reminders-page .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.reminders-page .btn-primary { background-color: var(--color-primary); color: var(--color-white); }
+.reminders-page .btn-primary:hover { background-color: var(--color-primary-dark); }
+.reminders-page .btn-primary:active { transform: scale(0.98); }
+.reminders-page .btn-secondary { background-color: transparent; color: var(--text-primary); border-color: var(--border-color); }
+.reminders-page .btn-secondary:hover { background-color: var(--bg-tertiary); border-color: var(--text-tertiary); }
+.reminders-page .btn-danger { background-color: var(--color-danger); color: var(--color-white); }
+.reminders-page .btn-danger:hover { background-color: var(--color-danger-dark); }
+.reminders-page .btn-sm { padding: var(--spacing-xs) var(--spacing-md); font-size: var(--font-size-xs); }
+.reminders-page .btn-icon { padding: 6px; background: none; border: none; cursor: pointer; border-radius: var(--radius-md); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition-fast); }
+.reminders-page .btn-icon:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 
 /* Bell dropdown styles moved to styles.css (global) */
 

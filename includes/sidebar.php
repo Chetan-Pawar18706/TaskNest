@@ -181,6 +181,14 @@ $navClass = function ($page) use ($current_page) {
                         <span class="nav-label">Passwords</span>
                     </a>
                 </li>
+                <li class="nav-item <?php echo $navClass('feedback.php'); ?>">
+                    <a href="<?php echo SITE_URL; ?>/feedback.php" class="nav-link">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span class="nav-label">Feedback</span>
+                    </a>
+                </li>
             </ul>
         </div>
         <?php if ($is_admin): ?>

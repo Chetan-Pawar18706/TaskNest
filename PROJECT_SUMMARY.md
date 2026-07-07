@@ -2,7 +2,7 @@
 
 ## Overview
 
-TaskNest is a full-stack, server-rendered web application for personal life management. It is a traditional PHP multi-page application where each URL maps to a `.php` file that renders a full HTML page. The application runs on XAMPP (Apache + MySQL + PHP) and is accessed via browser.
+TaskNest is a full-stack, server-rendered web application for personal life management. It is a traditional PHP multi-page application where each URL maps to a `.php` file that renders a full HTML page.
 
 **Tech Stack:** PHP 8+ (procedural), MySQL (InnoDB, utf8mb4), HTML5, CSS3 (custom properties), Vanilla JavaScript, Chart.js (CDN)
 
@@ -74,12 +74,23 @@ TaskNest/
 │   ├── events/
 │   │   ├── events-add.php              # Add event form
 │   │   └── events-edit.php             # Edit event form
+│   ├── reminders/
+│   │   ├── index.php                   # Reminders list with filter toggle
+│   │   ├── reminders.php               # Reminders POST/AJAX handler
+│   │   ├── reminders-add.php           # Add reminder form
+│   │   └── reminders-edit.php          # Edit reminder form
+│   ├── passwords/
+│   │   ├── index.php                   # Password vault with filter toggle
+│   │   ├── passwords.php               # Passwords POST/AJAX handler
+│   │   ├── passwords-add.php           # Add password form
+│   │   ├── passwords-edit.php          # Edit password form
+│   │   └── password-categories.php     # Category management
 │   └── admin/
 │       ├── index.php                   # Admin panel view (dashboard, users, activity, feedback, settings)
 │       ├── admin.php                   # Admin POST handler (AJAX)
 │       └── admin-root.php              # Admin entry point (auth check, routing)
 ├── assets/
-│   ├── css/ (17 files)
+│   ├── css/ (18 files)
 │   │   ├── variables.css               # CSS custom properties (colors, spacing, typography)
 │   │   ├── reset.css                   # CSS reset and normalization
 │   │   ├── styles.css                  # Main component styles, layout, 2FA styles
@@ -88,7 +99,7 @@ TaskNest/
 │   │   ├── components.css              # Reusable component styles (modal, sidebar profile)
 │   │   ├── landing.css                 # Landing page styles
 │   │   ├── dashboard.css               # Dashboard-specific styles
-│   │   ├── tasks.css                   # Tasks module + filter toggle button
+│   │   ├── tasks.css                   # Tasks module
 │   │   ├── notes.css                   # Notes module
 │   │   ├── expenses.css                # Expenses module
 │   │   ├── documents.css               # Documents module
@@ -96,6 +107,8 @@ TaskNest/
 │   │   ├── goals.css                   # Goals module
 │   │   ├── shopping.css                # Shopping module
 │   │   ├── borrow.css                  # Borrow module
+│   │   ├── reminders.css               # Reminders module
+│   │   ├── passwords.css               # Password manager module
 │   │   └── admin.css                   # Admin panel
 │   └── js/ (14 files)
 │       ├── main.js                     # Core utilities, namespace
@@ -111,13 +124,12 @@ TaskNest/
 │       ├── habits.js                   # Habits CRUD, log tracking
 │       ├── goals.js                    # Goals CRUD, progress update
 │       ├── shopping.js                 # Shopping CRUD, checkbox toggle
-│       └── borrow.js                   # Borrow CRUD
+│       ├── borrow.js                   # Borrow CRUD
+│       ├── reminders.js                # Reminders CRUD
+│       └── passwords.js                # Password vault CRUD, encryption
 ├── uploads/
-│   ├── avatars/                        # User profile pictures
 │   ├── documents/                      # Uploaded documents
-│   ├── notes/                          # Note attachments
-│   ├── profile/                        # Profile pictures
-│   └── tasks/                          # Task attachments
+│   └── profile/                        # Profile pictures
 ├── logs/
 │   └── errors.log                      # Application error logs
 ├── index.php                           # Landing page
@@ -129,6 +141,7 @@ TaskNest/
 ├── dashboard.php                       # Main dashboard
 ├── profile.php                         # User profile
 ├── settings.php                        # User settings (theme, 2FA, notifications)
+├── feedback.php                        # User feedback page (submit, track, view replies)
 ├── 2fa-setup.php                       # Two-factor auth setup (QR code, backup codes)
 ├── 2fa-verify.php                      # Two-factor auth verification (login)
 ├── tasks.php                           # Tasks entry point
@@ -139,6 +152,8 @@ TaskNest/
 ├── goals.php                           # Goals entry point
 ├── shopping.php                        # Shopping entry point
 ├── borrow.php                          # Borrow entry point
+├── reminders.php                       # Reminders entry point
+├── passwords.php                       # Password vault entry point
 ├── .htaccess                           # Apache security
 ├── .gitignore                          # Git ignore rules
 ├── README.md                           # Project documentation
@@ -146,20 +161,20 @@ TaskNest/
 ```
 
 **File counts:**
-- 19 root-level PHP files
-- 43 module PHP files (10 modules)
+- 21 root-level PHP files
+- 43 module PHP files (12 modules)
 - 7 include PHP files
 - 1 config PHP file
-- 17 CSS files
+- 18 CSS files
 - 14 JavaScript files
 - 1 SQL schema file
-- **Total: ~102 files**
+- **Total: ~105 files**
 
 ---
 
 ## Authentication System
 
-**File:** `includes/auth.php` (606 lines)
+**File:** `includes/auth.php`
 
 The `Auth` class handles all authentication operations:
 
@@ -170,15 +185,15 @@ The `Auth` class handles all authentication operations:
 - 30-minute session timeout
 - Session regeneration on login
 
-### Registration (`register()`)
+### Registration
 - Username: 3-50 characters, unique
 - Email: valid format, unique
 - Password: 8+ characters, must contain uppercase letter and number
-- Password hashing: Argon2id (65536 memory cost, 4 time cost, 3 threads)
+- Password hashing: Argon2id
 - Auto-creates settings row for new user
 - Logs registration activity
 
-### Login (`login()`)
+### Login
 - Validates email format and password presence
 - Checks `is_active` status
 - Uses `password_verify()` against Argon2id hash
@@ -188,14 +203,14 @@ The `Auth` class handles all authentication operations:
 - Logs login activity
 
 ### Two-Factor Authentication (TOTP)
-- `generateTwoFactorSecret()` — Generates Base32 secret key
-- `getTwoFactorUri()` — Generates otpauth:// URI for QR code
-- `generateTotpCode()` — Generates current 6-digit TOTP code (HMAC-SHA1)
-- `verifyTotpCode()` — Verifies code with ±1 time window tolerance
-- `generateBackupCodes()` — Generates 8 backup codes (hashed)
-- `verifyBackupCode()` — Verifies and consumes a backup code
-- `enableTwoFactor()` / `disableTwoFactor()` — Toggle 2FA
-- `setTwoFactorPending()` / `isTwoFactorPending()` / `completeTwoFactorVerification()` — Login 2FA flow
+- Generates Base32 secret key
+- Generates otpauth:// URI for QR code
+- Generates current 6-digit TOTP code (HMAC-SHA1)
+- Verifies code with plus/minus 1 time window tolerance
+- Generates 8 backup codes (hashed)
+- Verifies and consumes a backup code
+- Toggle 2FA enable/disable
+- Login 2FA flow management
 
 ### Password Reset
 - Token-based via `password_resets` table
@@ -204,32 +219,32 @@ The `Auth` class handles all authentication operations:
 - Validates token, updates password, marks token as used
 
 ### CSRF Protection
-- `generateCsrfToken()` — Creates 64-char hex token in session
-- `verifyCsrfToken()` — Compares submitted token against session value
+- Creates 64-char hex token in session
+- Compares submitted token against session value
 - Used on all POST forms
 
 ### Activity Logging
-- `logActivity()` — Logs user actions to `activity_logs` table
+- Logs user actions to `activity_logs` table
 - Records IP address and user agent
 
 ---
 
 ## Database Schema
 
-**File:** `database/tasknest.sql` (408+ lines)
+**File:** `database/tasknest.sql`
 
 All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 
 ### Core Tables
-| Table | Purpose | Key Columns |
-|-------|---------|-------------|
-| `users` | User accounts | id, username, email, password_hash, first_name, last_name, avatar_url, phone, bio, timezone, theme, is_active, role (user/admin) |
-| `password_resets` | Password reset tokens | id, user_id, token, expires_at, is_used |
-| `sessions` | Remember-me tokens | id, user_id, session_token, remember_token, expires_at |
-| `settings` | User preferences | user_id, notifications_enabled, two_factor_enabled, two_factor_secret, two_factor_backup_codes, language, date_format, items_per_page |
-| `activity_logs` | Audit trail | user_id, action, entity_type, entity_id, description, ip_address, user_agent |
-| `notifications` | User notifications | user_id, title, message, is_read |
-| `calendar_events` | Calendar entries | user_id, title, event_date, description |
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts with roles (user/admin), theme preference |
+| `password_resets` | Password reset tokens |
+| `sessions` | Remember-me tokens |
+| `settings` | User preferences (notifications, 2FA enabled/secret/backup codes) |
+| `activity_logs` | Audit trail |
+| `notifications` | User notifications |
+| `calendar_events` | Calendar entries |
 
 ### Module Tables
 | Table | Purpose |
@@ -250,10 +265,13 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 | `habit_logs` | Daily habit completions |
 | `goals` | Goals with target/current values |
 | `shopping` | Shopping list items |
+| `reminders` | Date/time reminders with repeat |
+| `saved_passwords` | Encrypted password vault entries |
+| `password_categories` | Password vault categories |
 
 ### Dynamic Tables (created by PHP)
-- `feedback` — User feedback with admin replies
-- `site_settings` — Key/value site configuration (site_name, maintenance_mode, allow_registration, etc.)
+- `feedback` -- User feedback with admin replies, viewed status
+- `site_settings` -- Key/value site configuration
 
 ### Key Design Patterns
 - Soft deletes (`is_deleted` column) on all module tables
@@ -266,8 +284,6 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 ## Modules
 
 ### 1. Tasks Module
-**Files:** `modules/tasks/` (5 files)
-
 - Full CRUD operations
 - Categories with custom colors
 - Priority levels (Low, Medium, High, Urgent)
@@ -276,11 +292,9 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 - 4 views: List, Grid, Kanban, Table
 - Bulk actions (complete, delete, change category)
 - Task activity logging
-- Toggleable filter panel (search, status, priority, category, date range, sort)
+- Toggleable filter panel
 
 ### 2. Smart Notes Module
-**Files:** `modules/notes/` (5 files)
-
 - Rich text content
 - Categories with colors
 - Pin important notes
@@ -291,19 +305,15 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 - Toggleable filter panel
 
 ### 3. Expense Manager Module
-**Files:** `modules/expenses/` (5 files)
-
 - Income and expense tracking
 - Custom categories with colors
 - Budget management (monthly/weekly/yearly)
 - Charts: Income vs Expenses (line), Category Breakdown (pie)
 - CSV export
 - Recurring transactions
-- Toggleable filter panel (search, type, category, date range)
+- Toggleable filter panel
 
 ### 4. Document Vault Module
-**Files:** `modules/documents/` (5 files)
-
 - Secure file upload (PDF, images, docs)
 - File type and size validation
 - Categories
@@ -314,8 +324,6 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 - Toggleable filter panel
 
 ### 5. Habits Module
-**Files:** `modules/habits/` (4 files)
-
 - Daily/weekly/monthly frequency
 - Target count per period
 - Streak visualization (7-day grid)
@@ -324,8 +332,6 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 - Toggleable search filter
 
 ### 6. Goals Module
-**Files:** `modules/goals/` (5 files)
-
 - Target values with current progress
 - Categories
 - Start/due dates
@@ -334,8 +340,6 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 - Toggleable filter panel
 
 ### 7. Shopping Module
-**Files:** `modules/shopping/` (5 files)
-
 - Item name and quantity
 - Estimated vs actual price
 - Categories
@@ -344,191 +348,134 @@ All tables use InnoDB engine with utf8mb4_unicode_ci collation.
 - Toggleable filter panel
 
 ### 8. Borrow & Lend Module
-**Files:** `modules/borrow/` (4 files)
-
 - Track borrowed or lent items/money
 - Person name and contact
 - Borrow and return dates
 - Status tracking (pending, returned, overdue)
 - Overdue alerts
-- Toggleable filter panel (search, type, status)
+- Toggleable filter panel
 
 ### 9. Events Module
-**Files:** `modules/events/` (2 files)
-
 - Calendar events with add/edit
 - Linked from dashboard calendar
 
-### 10. Admin Panel
-**Files:** `modules/admin/` (3 files)
+### 10. Reminders Module
+- Date/time reminders with repeat types (none/daily/weekly/monthly/yearly)
+- Priority levels
+- Categories
+- Email notifications
+- Bell notification system
+- Bulk delete
+- Toggleable filter panel
 
+### 11. Password Manager Module
+- Encrypted password vault (AES-256-CBC derived from user password)
+- Vault lock/unlock mechanism (30-min timeout)
+- Password generator with configurable options
+- Categories
+- Favorites
+- Bulk actions
+- Toggleable filter panel
+
+### 12. Feedback Module
+- Submit feedback (bug reports, feature requests, improvements)
+- Track feedback status (Open, In Progress, Resolved, Closed)
+- See if admin has viewed your feedback
+- View admin replies with full date and time
+- Full details timeline (submitted, updated, reply dates)
+- Delete open feedback
+- Stats overview (total, open, in progress, resolved)
+
+### 13. Admin Panel
 - **Dashboard tab:** User registration chart, module usage chart
 - **Users tab:** Searchable user list, activate/deactivate toggle
 - **Activity Log tab:** Paginated audit trail
-- **Feedback tab:** User feedback with admin replies, status management
-- **Settings tab:** Dynamic site configuration (site_name, maintenance_mode, allow_registration, items_per_page)
+- **Feedback tab:** User feedback with admin replies, status management, viewed indicator
+- **Settings tab:** Dynamic site configuration
 
 ---
 
 ## Dashboard
 
-**File:** `dashboard.php`
-
 - Welcome hero with quick action buttons
-- 10 stat cards (tasks, completed, pending, notes, monthly expense, documents, habits, goals, shopping, borrow)
-- 3 charts: Expense trends (6-month line), Task completion (doughnut), Habit progress (weekly bar)
+- 10 stat cards
+- 3 charts: Expense trends, Task completion, Habit progress
 - Mini calendar with event counts
 - Recent activity timeline
 - Upcoming reminders
-- Quick action links (tasks, notes, expenses, documents, habits, goals)
 
 ---
 
 ## Two-Factor Authentication (2FA)
 
-### Setup Flow (`2fa-setup.php`)
-1. **Step 1 — Introduction:** Explains how 2FA works with authenticator apps
-2. **Step 2 — QR Code:** Shows QR code for scanning + manual secret key for copying
-3. **Step 3 — Backup Codes:** Displays 8 one-time backup codes to save/download
+### Setup Flow
+1. **Step 1:** Introduction to 2FA
+2. **Step 2:** QR code for scanning + manual secret key
+3. **Step 3:** 8 one-time backup codes
 
 ### Login Flow
-1. User submits email + password (`login.php`)
-2. If 2FA enabled → redirect to `2fa-verify.php` (user not fully logged in yet)
-3. User enters 6-digit TOTP code OR 8-character backup code
-4. On success → session created, user logged in
-
-### Verification
-- TOTP codes verified with ±1 time window (30 seconds each)
-- Backup codes are single-use, stored as SHA-256 hashes
-- 2FA can be enabled/disabled from Settings → Security
+1. User submits email + password
+2. If 2FA enabled -> redirect to verification page
+3. User enters 6-digit TOTP code OR backup code
+4. On success -> session created
 
 ---
 
 ## Frontend Architecture
 
-### CSS (17 files)
-- `variables.css` — CSS custom properties (colors, spacing, typography, shadows)
-- `reset.css` — CSS reset and normalization
-- `styles.css` — Main component styles, layout, 2FA page styles
-- `responsive.css` — Mobile breakpoints (1024px, 768px, 480px)
-- `theme.css` — Dark/light theme variable overrides
-- `components.css` — Reusable component styles (modal, sidebar profile)
-- `landing.css` — Landing page styles
-- Module-specific: dashboard, tasks, notes, expenses, documents, habits, goals, shopping, borrow, admin
+### CSS (18 files)
+- `variables.css` -- CSS custom properties
+- `reset.css` -- CSS reset and normalization
+- `styles.css` -- Main component styles, layout
+- `responsive.css` -- Mobile breakpoints (1024px, 768px, 480px)
+- `theme.css` -- Dark/light theme variable overrides
+- `components.css` -- Reusable component styles
+- `landing.css` -- Landing page styles
+- Module-specific stylesheets
 
 ### JavaScript (14 files)
-- `main.js` — Core utilities, `window.TaskNest` namespace
-- `theme.js` — Dark/light theme toggle with localStorage + database persistence
-- `sidebar.js` — Sidebar collapse/expand, click-outside close, resize handler
-- `toast.js` — Toast notification system
-- `modal.js` — Modal dialog management
-- Module-specific: dashboard, tasks, notes, expenses, documents, habits, goals, shopping, borrow
+- `main.js` -- Core utilities
+- `theme.js` -- Dark/light theme toggle
+- `sidebar.js` -- Sidebar collapse/expand
+- `toast.js` -- Toast notification system
+- `modal.js` -- Modal dialog management
+- Module-specific scripts
 
 ### Key Frontend Patterns
-- Global `TaskNest` namespace for JS modules
 - CSS custom properties for theming
-- Vanilla JS (no frameworks, no jQuery)
+- Vanilla JS (no frameworks)
 - Chart.js via CDN for data visualization
 - Event delegation for dynamic content
-- Filter toggle pattern: `display:none` by default, `.open` class shows
-- Cache-busting on CSS files via `?v=filemtime()` in header.php
-
----
-
-## Architectural Patterns
-
-### Request Flow
-```
-Browser Request
-    → .htaccess (security checks, URL rewriting)
-    → Root PHP file (e.g., tasks.php)
-    → config/db.php (database connection)
-    → includes/auth.php (session/auth check)
-    → POST handler (if applicable)
-    → modules/<feature>/index.php (view)
-    → includes/header.php + footer.php (layout)
-    → HTML Response
-```
-
-### Module Pattern
-Each module follows the same structure:
-1. **Root entry point** (e.g., `tasks.php`) — Handles POST routing, includes module view
-2. **Module view** (`modules/tasks/index.php`) — HTML template with filters, list, pagination
-3. **Module handler** (`modules/tasks/tasks.php`) — POST/AJAX processing, returns JSON
-4. **Functions** (`includes/functions.php`) — Business logic, database queries
-5. **CSS** (`assets/css/tasks.css`) — Module-specific styles
-6. **JS** (`assets/js/tasks.js`) — Module-specific interactions
-
-### Data Access
-- All database access via MySQLi prepared statements
-- `safePrepare()` wrapper prevents "bind_param() on bool" errors
-- `_NullStmt` / `_NullResult` stub objects for failed queries
-- Centralized in `includes/functions.php`
-
-### Error Handling
-- Custom error handler logs to `logs/errors.log`
-- Custom exception handler with debug mode support
-- Database connection errors caught and logged
-- Graceful degradation in production mode
+- Cache-busting on CSS files
 
 ---
 
 ## Security
 
 ### Application Level
-- Prepared statements for all SQL queries (no string concatenation)
+- Prepared statements for all SQL queries
 - CSRF token verification on all POST requests
 - XSS protection via `htmlspecialchars()` with `ENT_QUOTES`
 - Argon2id password hashing
 - Session security (HttpOnly, Secure, SameSite, 30-min timeout)
 - File upload validation (type, size, MIME)
 - Role-based access control for admin features
-- Soft deletes (no data actually removed)
+- Soft deletes
 - Two-Factor Authentication (TOTP) with backup codes
+- AES-256-CBC encryption for password vault
 
 ### Server Level (.htaccess)
-- Directory browsing disabled (`Options -Indexes`)
-- Protected directories: `config/`, `database/`, `logs/`
-- PHP execution blocked in `uploads/`
-- Security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy
+- Directory browsing disabled
+- Protected directories: config/, database/, logs/
+- PHP execution blocked in uploads/
+- Security headers enabled
 - Server signature disabled
-- PHP settings: display_errors off, expose_php off, 10M upload limit, 30s execution limit
 
 ### Database
 - All queries use prepared statements with bound parameters
 - Foreign key constraints enforce referential integrity
 - CASCADE deletes prevent orphaned records
 - UTF8MB4 charset for full Unicode support
-
----
-
-## Configuration
-
-**File:** `config/db.php` (105 lines)
-
-| Constant | Value | Purpose |
-|----------|-------|---------|
-| DB_HOST | localhost | MySQL host |
-| DB_USER | root | MySQL user |
-| DB_PASS | (empty) | MySQL password |
-| DB_NAME | tasknest | Database name |
-| DB_PORT | 3306 | MySQL port |
-| SITE_URL | http://localhost/TaskNest | Application URL |
-| SESSION_TIMEOUT | 1800 (30 min) | Session expiry |
-| REMEMBER_ME_DURATION | 604800 (7 days) | Remember me cookie |
-| MAX_UPLOAD_SIZE | 5242880 (5MB) | Max file upload |
-| DEBUG | true | Debug mode |
-
----
-
-## Setup & Installation
-
-1. Place files in web server document root (e.g., `C:\xampp\htdocs\TaskNest\`)
-2. Import `database/tasknest.sql` into MySQL
-3. Edit `config/db.php` with database credentials
-4. Ensure `uploads/` and `logs/` directories are writable
-5. Access `http://localhost/TaskNest/` in browser
-6. Register a new user or set up admin access via database
 
 ---
 
@@ -551,8 +498,8 @@ MIT License
 
 ## Author
 
-**Name** — Chetan Pawar
+**Name** - Chetan Pawar
 
-**Email** — chetanpawar8125@email.com
+**Email** - chetanpawar8125@email.com
 
-**Project Link** — [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)
+**Project Link** - [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)

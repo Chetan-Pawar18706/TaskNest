@@ -300,6 +300,24 @@ include 'includes/header.php';
             </div>
         </form>
     </div>
+    
+    <!-- Feedback Link -->
+    <div class="card" style="margin-top:var(--spacing-lg);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <h3 style="margin:0 0 0.25rem;font-size:1rem;">Send Feedback</h3>
+                <p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+                    Found a bug? Have a feature request? Let us know!
+                </p>
+            </div>
+            <a href="<?php echo SITE_URL; ?>/feedback.php" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Go to Feedback
+            </a>
+        </div>
+    </div>
 </div>
 
 <style>

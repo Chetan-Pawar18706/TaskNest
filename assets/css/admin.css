@@ -169,6 +169,11 @@
   background: #6b728020;
   color: #6b7280;
 }
+.feedback-badge.viewed {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  font-size: 0.65rem;
+}
 
 .feedback-reply {
   background: var(--bg-secondary, #f1f5f9);

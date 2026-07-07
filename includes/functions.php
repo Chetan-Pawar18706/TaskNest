@@ -3354,6 +3354,7 @@ function ensureAdminTablesExist($mysqli) {
             message TEXT NOT NULL,
             category ENUM('bug', 'feature', 'improvement', 'other') DEFAULT 'other',
             status ENUM('open', 'in_progress', 'resolved', 'closed') DEFAULT 'open',
+            viewed_by_admin TINYINT(1) DEFAULT 0,
             admin_reply TEXT DEFAULT NULL,
             admin_replied_at TIMESTAMP NULL DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -3375,6 +3376,12 @@ function ensureAdminTablesExist($mysqli) {
         if (!$mysqli->query($s)) {
             logError("Admin table creation failed: " . $mysqli->error . " | Query: " . substr($s, 0, 200), 'SQL_ERROR');
         }
+    }
+    
+    // Add viewed_by_admin column to feedback table if missing (for existing databases)
+    $checkCol = $mysqli->query("SHOW COLUMNS FROM feedback LIKE 'viewed_by_admin'");
+    if ($checkCol && $checkCol->num_rows === 0) {
+        $mysqli->query("ALTER TABLE feedback ADD COLUMN viewed_by_admin TINYINT(1) DEFAULT 0 AFTER status");
     }
 
     $defaults = [
@@ -3558,6 +3565,34 @@ function submitFeedbackHandler($mysqli, $user_id, $post) {
     $stmt->bind_param('isss', $user_id, $subject, $message, $category);
     if ($stmt->execute()) { return ['success' => true, 'message' => 'Feedback submitted.']; }
     return ['success' => false, 'message' => 'Unable to submit feedback.'];
+}
+
+function getUserFeedback($mysqli, $user_id) {
+    ensureAdminTablesExist($mysqli);
+    $stmt = safePrepare($mysqli, "SELECT * FROM feedback WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $items = [];
+    while ($row = $result->fetch_assoc()) { $items[] = $row; }
+    return $items;
+}
+
+function markFeedbackViewed($mysqli, $feedback_id) {
+    ensureAdminTablesExist($mysqli);
+    $stmt = safePrepare($mysqli, "UPDATE feedback SET viewed_by_admin = 1 WHERE id = ? AND viewed_by_admin = 0");
+    $stmt->bind_param('i', $feedback_id);
+    $stmt->execute();
+}
+
+function deleteFeedbackHandler($mysqli, $feedback_id, $user_id) {
+    ensureAdminTablesExist($mysqli);
+    $stmt = safePrepare($mysqli, "DELETE FROM feedback WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $feedback_id, $user_id);
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        return ['success' => true, 'message' => 'Feedback deleted.'];
+    }
+    return ['success' => false, 'message' => 'Unable to delete feedback.'];
 }
 
 function getSiteSettings($mysqli) {

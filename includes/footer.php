@@ -28,10 +28,10 @@
             </div>
             <div class="modal-body">
                 <p id="confirmModalBody">Are you sure you want to delete this item?</p>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-close-modal="confirmModal">Cancel</button>
-                    <button class="btn btn-danger" type="button" id="confirmActionBtn">Delete</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-close-modal="confirmModal">Cancel</button>
+                <button class="btn btn-danger" type="button" id="confirmActionBtn">Delete</button>
             </div>
         </div>
     </div>

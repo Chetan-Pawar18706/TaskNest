@@ -42,6 +42,15 @@
     .goals-filters { flex-direction: column; }
 }
 
+@media (max-width: 480px) {
+    .goals-toolbar { gap: 0.5rem; }
+    .goals-summary { flex-direction: column; }
+    .goals-summary .summary-card { min-width: auto; }
+    .goal-card-header { flex-direction: column; gap: 0.5rem; }
+    .goal-actions { flex-direction: column; }
+    .goal-actions .btn { width: 100%; justify-content: center; }
+}
+
 .goals-page .modal {
     display: none;
     position: fixed;

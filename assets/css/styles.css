@@ -531,16 +531,18 @@ body[data-theme="dark"] .moon-icon {
     color: var(--color-primary);
     background: rgba(99, 102, 241, 0.1);
     border-radius: var(--radius-lg);
-    outline: none !important;
 }
 
-.navbar-notifications-wrapper * {
-    outline: none !important;
+.navbar-notifications-wrapper *:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
-.navbar-notifications-wrapper *:focus,
+.navbar-notifications-wrapper *:focus:not(:focus-visible) {
+    outline: none;
+}
 .navbar-notifications-wrapper *:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 /* ============================================
@@ -861,7 +863,7 @@ input[type="datetime-local"].form-control {
     cursor: pointer;
     padding: 0;
     font-size: inherit;
-    font-weight: var(--weight-medium);
+    font-weight: var(--font-weight-medium);
     text-decoration: none;
     transition: color var(--transition-fast);
 }
@@ -1720,13 +1722,23 @@ input[type="datetime-local"].form-control {
 }
 
 .btn-danger {
-    background: #ef4444;
-    color: #fff;
-    border: none;
+    background-color: var(--color-danger);
+    color: var(--color-white);
 }
 
 .btn-danger:hover {
-    background: #dc2626;
+    background-color: var(--color-danger-dark);
+}
+
+.btn-xs {
+    padding: 0.2rem 0.5rem;
+    font-size: var(--font-size-xs);
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: var(--color-danger);
+    color: var(--color-danger-dark);
 }
 
 .tfa-lock-icon + h1 {

@@ -12,14 +12,11 @@ All-in-one Personal Life Management System built with PHP 8+, MySQL, vanilla Jav
 ## Table of Contents
 
 - [Features](#features)
-- [Demo](#demo)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Project Structure](#project-structure)
 - [Tech Stack](#tech-stack)
 - [Database Schema](#database-schema)
 - [Security Features](#security-features)
-- [Configuration](#configuration)
 - [Browser Support](#browser-support)
 - [Contributing](#contributing)
 - [License](#license)
@@ -29,36 +26,195 @@ All-in-one Personal Life Management System built with PHP 8+, MySQL, vanilla Jav
 
 ## Features
 
-| Module | Description |
-|--------|-------------|
-| **Authentication** | Register, login, logout, forgot/reset password, remember me |
-| **Two-Factor Auth** | TOTP-based 2FA (Google Authenticator / Authy), QR code setup, backup codes |
-| **Dashboard** | Overview stats, charts, calendar, activity feed, quick actions |
-| **Tasks** | Full CRUD, categories, priorities, statuses, 4 views (list/grid/kanban/table), bulk actions |
-| **Smart Notes** | Rich text, categories, pin/archive/trash, image uploads, search |
-| **Expense Manager** | Income/expense tracking, budgets, charts (line/pie), CSV export |
-| **Document Vault** | Secure file upload (PDF/images/docs), preview, download, expiry reminders |
-| **Borrow & Lend** | Track items/money borrowed or lent, return status, overdue alerts |
-| **Habits** | Daily/weekly/monthly tracking, streak visualization, weekly activity charts |
-| **Goals** | Progress tracking with target values, completion status, categories |
-| **Shopping List** | Add items, quantities, estimated vs actual prices, categories |
-| **Events** | Calendar events with add/edit functionality |
-| **Admin Panel** | User management, activity logs, feedback system, site settings |
+### Authentication & Security
+
+| Feature | Description |
+| --- | --- |
+| User Registration | Username, email, password with validation |
+| Login | Email + password with Remember Me (7-day cookie) |
+| Forgot/Reset Password | Token-based password reset via email |
+| Two-Factor Auth (2FA) | TOTP-based 2FA compatible with Google Authenticator / Authy |
+| 2FA Setup Wizard | 3-step setup: Intro, QR code scan, backup codes download |
+| Backup Codes | 8 single-use backup codes hashed with password_hash() |
+| Session Security | HttpOnly, Secure, SameSite=Lax cookies, 30-min timeout |
+| CSRF Protection | Token verification on all POST requests |
+
+### Dashboard
+
+| Feature | Description |
+| --- | --- |
+| Welcome Hero | Greeting card with user name and quick action buttons |
+| 10 Stat Cards | Tasks, completed, pending, notes, monthly expense, documents, habits, goals, shopping, borrow |
+| Expense Trends Chart | 6-month income vs expenses line chart (Chart.js) |
+| Task Completion Chart | Doughnut chart showing task status distribution |
+| Habit Progress Chart | Weekly activity bar chart (Chart.js) |
+| Mini Calendar | Calendar with event counts and navigation |
+| Recent Activity | Timeline of user actions across all modules |
+| Upcoming Reminders | Panel showing pending reminders with priority indicators |
+
+### Tasks Module
+
+| Feature | Description |
+| --- | --- |
+| Full CRUD | Create, read, update, delete tasks |
+| Categories | Custom categories with colors and icons |
+| Priority Levels | Low, Medium, High, Urgent |
+| Statuses | Pending, In Progress, Completed |
+| Due Dates | With optional reminder datetimes |
+| 4 Views | List, Grid, Kanban, Table views |
+| Bulk Actions | Complete, delete, change category for multiple tasks |
+| Task Activity Log | Track changes to tasks |
+| Soft Delete | Tasks moved to trash, not permanently deleted |
+| Filter Panel | Search, status, priority, category, date range, sort (toggleable) |
+
+### Smart Notes Module
+
+| Feature | Description |
+| --- | --- |
+| Rich Text Content | Full text editing for notes |
+| Categories | Custom categories with colors |
+| Pin Notes | Pin important notes to top |
+| Archive | Archive old notes |
+| Soft Delete (Trash) | Move to trash, restore or permanently delete |
+| Image Attachments | Attach images to notes |
+| Full-Text Search | Search across note titles and content |
+| Filter Panel | Search, category, status filters (toggleable) |
+
+### Expense Manager Module
+
+| Feature | Description |
+| --- | --- |
+| Income & Expense Tracking | Record both income and expenses |
+| Custom Categories | Categories with colors |
+| Budget Management | Monthly/weekly/yearly budgets per category |
+| Income vs Expenses Chart | Line chart showing trends over time |
+| Category Breakdown Chart | Pie chart of expenses by category |
+| CSV Export | Export transactions to CSV file |
+| Recurring Transactions | Set up recurring income/expenses |
+| Filter Panel | Search, type, category, date range filters (toggleable) |
+
+### Document Vault Module
+
+| Feature | Description |
+| --- | --- |
+| Secure File Upload | Upload PDF, images, documents |
+| File Validation | Type and size validation (5MB max) |
+| Categories | Organize documents in categories |
+| Expiry Date Tracking | Track document expiry dates |
+| Reminder Dates | Set reminders for document renewals |
+| Important Flag | Mark documents as important |
+| Preview and Download | View and download uploaded files |
+| Filter Panel | Search, category, type filters (toggleable) |
+
+### Password Manager Module
+
+| Feature | Description |
+| --- | --- |
+| Encrypted Vault | AES-256-CBC encryption derived from user password |
+| Vault Lock/Unlock | 30-minute auto-lock timeout |
+| Password Generator | Configurable password generation (length, characters) |
+| Categories | Organize passwords in categories |
+| Favorites | Mark frequently used passwords |
+| Bulk Actions | Select and manage multiple passwords |
+| Filter Panel | Search, category, favorites filters (toggleable) |
+
+### Habits Module
+
+| Feature | Description |
+| --- | --- |
+| Frequency Tracking | Daily, weekly, monthly habit tracking |
+| Target Counts | Set target completions per period |
+| Streak Visualization | 7-day streak grid with color coding |
+| Weekly Activity Chart | Bar chart showing habit completions |
+| Color Coding | Custom colors for habits |
+| Search Filter | Quick search across habits |
+
+### Goals Module
+
+| Feature | Description |
+| --- | --- |
+| Progress Tracking | Target values with current progress |
+| Categories | Custom goal categories |
+| Start/Due Dates | Track goal timelines |
+| Status Tracking | Active, completed, abandoned |
+| Progress Bar | Visual completion percentage |
+| Filter Panel | Search, status, category filters (toggleable) |
+
+### Shopping List Module
+
+| Feature | Description |
+| --- | --- |
+| Item Management | Add items with name and quantity |
+| Price Tracking | Estimated vs actual price comparison |
+| Categories | Organize items in categories |
+| Completion Toggle | Checkbox to mark items as bought |
+| Notes | Add notes to shopping items |
+| Filter Panel | Search, category, status filters (toggleable) |
+
+### Borrow and Lend Module
+
+| Feature | Description |
+| --- | --- |
+| Item Tracking | Track borrowed or lent items/money |
+| Person Details | Name and contact information |
+| Date Tracking | Borrow and return dates |
+| Status Management | Pending, returned, overdue |
+| Overdue Alerts | Visual indicators for overdue items |
+| Filter Panel | Search, type, status filters (toggleable) |
+
+### Calendar Events Module
+
+| Feature | Description |
+| --- | --- |
+| Event Management | Add, edit, delete calendar events |
+| Dashboard Integration | Events shown in dashboard mini calendar |
+| Date Navigation | Navigate through months |
+
+### Reminders Module
+
+| Feature | Description |
+| --- | --- |
+| Date/Time Reminders | Set reminders with specific dates |
+| Repeat Types | None, daily, weekly, monthly, yearly |
+| Priority Levels | Set reminder priorities |
+| Categories | Organize reminders in categories |
+| Email Notifications | Send email reminders |
+| Bell Notifications | In-app notification system |
+| Bulk Delete | Select and delete multiple reminders |
+
+### Feedback Module
+
+| Feature | Description |
+| --- | --- |
+| Submit Feedback | Users can submit bug reports, feature requests, improvements |
+| Track Status | View feedback status (Open, In Progress, Resolved, Closed) |
+| Admin View Status | See if admin has viewed your feedback |
+| Admin Replies | View admin responses with full date and time |
+| Feedback Details | Full timeline: submitted date, updated date, reply date |
+| Delete Feedback | Delete open feedback items |
+| Stats Overview | Total, Open, In Progress, Resolved counts |
+
+### Admin Panel
+
+| Feature | Description |
+| --- | --- |
+| Dashboard | User registration chart, module usage statistics |
+| User Management | Searchable user list, activate/deactivate users |
+| Activity Log | Paginated audit trail of all user actions |
+| Feedback System | User feedback with admin replies and status management |
+| Site Settings | Dynamic configuration (site name, maintenance mode, registration toggle) |
 
 ### UI Features
 
-- **Dark/Light Theme** — Toggle from navbar or settings, persisted to database
-- **Responsive Design** — Mobile-first with collapsible sidebar
-- **Filter Panels** — Toggleable filter forms on all module pages (hidden on mobile by default)
-- **Default Profile Avatar** — SVG fallback for users without profile pictures
-- **Toast Notifications** — Non-intrusive success/error messages
-- **Confirm Modals** — For destructive actions (delete, etc.)
-
----
-
-## Demo
-
-> Add screenshots of your application here after deployment.
+| Feature | Description |
+| --- | --- |
+| Dark/Light Theme | Toggle from navbar or settings, persisted to database per user |
+| Responsive Design | Mobile-first with collapsible sidebar (breakpoints: 1024px, 768px, 480px) |
+| Filter Panels | Toggleable filter forms on all module pages (hidden on mobile by default) |
+| Default Profile Avatar | SVG fallback for users without profile pictures |
+| Toast Notifications | Non-intrusive success/error messages |
+| Confirm Modals | For destructive actions (delete, etc.) |
+| Cache Busting | CSS/JS files loaded with version-based cache busting |
 
 ---
 
@@ -79,118 +235,58 @@ All-in-one Personal Life Management System built with PHP 8+, MySQL, vanilla Jav
 git clone https://github.com/Chetan-Pawar18706/TaskNest.git
 ```
 
-Place the `TaskNest` folder in your web server's document root (e.g., `C:\xampp\htdocs\`).
+Place the TaskNest folder in your web server's document root.
 
 ### 2. Create Database
 
-Open phpMyAdmin (`http://localhost/phpmyadmin`) and import the schema:
+Open phpMyAdmin and import the schema:
 
-**Option A: Import via phpMyAdmin**
+Option A: Import via phpMyAdmin
 
 1. Open phpMyAdmin
 2. Click Import tab
-3. Choose `database/tasknest.sql`
+3. Choose database/tasknest.sql
 4. Click Go
 
-**Option B: Import via command line**
+Option B: Import via command line
 
 ```bash
-mysql -u root -p < database/tasknest.sql
+mysql -u root -p tasknest < database/tasknest.sql
 ```
 
 ### 3. Configure Database
 
-Edit `config/db.php` with your database credentials:
+Edit config/db.php with your database credentials:
 
 ```php
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'your_username');
+define('DB_PASS', 'your_password');
 define('DB_NAME', 'tasknest');
 ```
 
 ### 4. Set Up Admin User
 
-Create an admin account through the application or your database tool, then assign the `admin` role to that user.
-
-If you need to create a password hash for the database, generate it locally with PHP and keep it private.
+Create an admin account through the application or your database tool, then assign the admin role to that user.
 
 ### 5. Access the Application
 
-Navigate to `http://localhost/TaskNest/` in your browser.
-
----
-
-## Project Structure
-
-```
-TaskNest/
-├── config/
-│   └── db.php                          # DB connection, constants, error handlers
-├── database/
-│   └── tasknest.sql                    # Complete MySQL schema (25+ tables)
-├── includes/
-│   ├── auth.php                        # Auth class: register, login, 2FA, CSRF, password reset
-│   ├── functions.php                   # 50+ utility/handler functions
-│   ├── header.php                      # HTML head, CSS loading, navbar/sidebar includes
-│   ├── footer.php                      # Script loading, layout closing, CSRF token
-│   ├── navbar.php                      # Top navigation (theme toggle, search, user menu)
-│   ├── sidebar.php                     # Side navigation (module links, admin link, profile)
-│   └── mail.php                        # Email helper using PHP mail()
-├── modules/
-│   ├── tasks/                          # Tasks CRUD (index, add, edit, categories, handler)
-│   ├── notes/                          # Smart Notes (index, add, edit, categories, handler)
-│   ├── expenses/                       # Expense Manager (index, add, edit, categories, handler)
-│   ├── documents/                      # Document Vault (index, upload, edit, categories, handler)
-│   ├── borrow/                         # Borrow & Lend (index, add, edit, handler)
-│   ├── habits/                         # Habit Tracker (index, add, edit, handler)
-│   ├── goals/                          # Goal Tracker (index, add, edit, categories, handler)
-│   ├── shopping/                       # Shopping List (index, add, edit, categories, handler)
-│   ├── events/                         # Calendar Events (add, edit)
-│   └── admin/                          # Admin Panel (dashboard, users, activity, feedback, settings)
-├── assets/
-│   ├── css/ (17 files)                 # Modular stylesheets per feature
-│   ├── js/ (14 files)                  # Modular scripts per feature
-│   └── images/                         # Logo, default-avatar.svg
-├── uploads/                            # User uploads (avatars, documents, notes, tasks)
-├── logs/                               # Application error logs
-├── index.php                           # Landing page for unauthenticated users
-├── login.php                           # Login with 2FA support
-├── register.php                        # User registration
-├── forgot-password.php                 # Password reset request
-├── reset-password.php                  # Password reset with token
-├── logout.php                          # Session destruction
-├── dashboard.php                       # Main dashboard with stats and charts
-├── profile.php                         # User profile view
-├── settings.php                        # User settings (profile, theme, 2FA, notifications)
-├── 2fa-setup.php                       # Two-factor auth setup (QR code, backup codes)
-├── 2fa-verify.php                      # Two-factor auth verification (login)
-├── tasks.php                           # Tasks entry point (POST handler → module view)
-├── notes.php                           # Notes entry point
-├── expenses.php                        # Expenses entry point (+ CSV export)
-├── documents.php                       # Documents entry point
-├── habits.php                          # Habits entry point
-├── goals.php                           # Goals entry point
-├── shopping.php                        # Shopping entry point
-├── borrow.php                          # Borrow entry point
-├── .htaccess                           # Apache security rules
-├── .gitignore                          # Git ignore rules
-├── README.md                           # This file
-└── PROJECT_SUMMARY.md                  # Detailed technical summary
-```
+Navigate to http://localhost/TaskNest/ in your browser.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
-| **Backend** | PHP 8+ (procedural with prepared statements) |
-| **Database** | MySQL with InnoDB, utf8mb4_unicode_ci |
-| **Frontend** | HTML5, CSS3 (custom properties), Vanilla JavaScript |
-| **Charts** | Chart.js (CDN) |
-| **2FA** | TOTP (RFC 6238) — pure PHP implementation, Google Charts QR API |
-| **Security** | CSRF tokens, XSS protection, Argon2id passwords, HttpOnly cookies |
+| --- | --- |
+| Backend | PHP 8+ (procedural with prepared statements) |
+| Database | MySQL with InnoDB, utf8mb4_unicode_ci |
+| Frontend | HTML5, CSS3 (custom properties), Vanilla JavaScript |
+| Charts | Chart.js (CDN) |
+| 2FA | TOTP (RFC 6238) - pure PHP implementation |
+| Encryption | AES-256-CBC for password vault (via openssl) |
+| Password Hashing | Argon2id |
+| Security | CSRF tokens, XSS protection, HttpOnly cookies, prepared statements |
 
 ---
 
@@ -201,7 +297,7 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 ### Core Tables
 
 | Table | Purpose |
-|-------|---------|
+| --- | --- |
 | users | User accounts with roles (user/admin), theme preference |
 | password_resets | Password reset tokens |
 | sessions | Remember-me tokens |
@@ -213,7 +309,7 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 ### Module Tables
 
 | Module | Tables |
-|--------|--------|
+| --- | --- |
 | Tasks | tasks, task_categories, task_activity_logs |
 | Notes | notes, note_categories, note_images |
 | Expenses | expenses, expense_categories, budgets |
@@ -222,7 +318,17 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 | Goals | goals |
 | Shopping | shopping |
 | Borrow | borrow_items |
-| Admin | feedback, site_settings (dynamic) |
+| Reminders | reminders |
+| Passwords | saved_passwords, password_categories |
+| Feedback | feedback (with admin replies, viewed status) |
+| Admin | site_settings (dynamic) |
+
+### Key Design Patterns
+
+- Soft deletes (is_deleted column) on all module tables
+- Foreign keys with ON DELETE CASCADE or ON DELETE SET NULL
+- Composite indexes for common query patterns
+- Timestamps on all tables (created_at, updated_at)
 
 ---
 
@@ -232,13 +338,14 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 
 - Prepared statements for all SQL queries (no string concatenation)
 - CSRF token verification on all POST requests
-- XSS protection via `htmlspecialchars()` with `ENT_QUOTES`
-- Argon2id password hashing (65536 memory cost, 4 time cost, 3 threads)
+- XSS protection via htmlspecialchars() with ENT_QUOTES
+- Argon2id password hashing
 - Session security (HttpOnly, Secure, SameSite, 30-min timeout)
 - File upload validation (type, size, MIME)
 - Role-based access control for admin features
 - Soft deletes (no data actually removed)
 - Two-Factor Authentication (TOTP) with backup codes
+- AES-256-CBC encryption for password vault
 
 ### Server Level (.htaccess)
 
@@ -250,26 +357,10 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 
 ---
 
-## Configuration
-
-| Constant | Default | Description |
-|----------|---------|-------------|
-| DB_HOST | localhost | MySQL host |
-| DB_USER | root | MySQL username |
-| DB_PASS | (empty) | MySQL password |
-| DB_NAME | tasknest | Database name |
-| SITE_URL | http://localhost/TaskNest | Application URL |
-| SESSION_TIMEOUT | 1800 | Session timeout (30 min) |
-| REMEMBER_ME_DURATION | 604800 | Remember me (7 days) |
-| MAX_UPLOAD_SIZE | 5242880 | Max upload (5MB) |
-| DEBUG | true | Debug mode |
-
----
-
 ## Browser Support
 
 | Browser | Minimum Version |
-|---------|-----------------|
+| --- | --- |
 | Chrome | 90+ |
 | Firefox | 88+ |
 | Safari | 14+ |
@@ -280,9 +371,9 @@ The application uses 25+ tables with InnoDB engine and utf8mb4_unicode_ci collat
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (git checkout -b feature/amazing-feature)
+3. Commit your changes (git commit -m 'Add some amazing feature')
+4. Push to the branch (git push origin feature/amazing-feature)
 5. Open a Pull Request
 
 ---
@@ -299,9 +390,6 @@ MIT License
 
 **Email** - chetanpawar8125@email.com
 
-**Project Link**: [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)
+**Project Link** - [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)
 #   T a s k N e s t  
- #   T a s k N e s t  
- #   T a s k N e s t  
- #   T a s k N e s t  
  

@@ -43,6 +43,16 @@
     .habits-grid { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 480px) {
+    .habits-toolbar { gap: 0.5rem; }
+    .habits-summary { flex-direction: column; }
+    .habits-summary .summary-card { min-width: auto; }
+    .habit-card-header { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+    .habit-actions { flex-direction: column; }
+    .habit-actions .btn { width: 100%; justify-content: center; }
+    .habit-streak { flex-wrap: wrap; }
+}
+
 .habits-page .modal {
     display: none;
     position: fixed;
