@@ -10,7 +10,6 @@
     function initDashboard() {
         initCharts();
         renderCalendar();
-        bindQuickActions();
         bindSearch();
         bindChartRange();
     }
@@ -191,20 +190,6 @@
 
         var title = document.getElementById('calendarMonthTitle');
         if (title) title.textContent = monthLabel;
-    }
-
-    function bindQuickActions() {
-        document.querySelectorAll('[data-modal-action]').forEach(function(button) {
-            button.addEventListener('click', function() {
-                var action = button.getAttribute('data-modal-action');
-                if (action === 'task') { window.location.href = siteUrl + '/tasks-add.php'; }
-                else if (action === 'note') { window.location.href = siteUrl + '/notes-add.php'; }
-                else if (action === 'expense') { window.location.href = siteUrl + '/expenses-add.php'; }
-                else if (action === 'document') { window.location.href = siteUrl + '/documents-upload.php'; }
-                else if (action === 'habit') { window.location.href = siteUrl + '/habits-add.php'; }
-                else if (action === 'goal') { window.location.href = siteUrl + '/goals-add.php'; }
-            });
-        });
     }
 
     function bindSearch() {

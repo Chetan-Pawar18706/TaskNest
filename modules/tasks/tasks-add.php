@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['flash_error'] = 'File must be less than 10MB.';
             redirect(SITE_URL . '/modules/tasks/tasks-add.php');
         }
-        $dir = __DIR__ . '/uploads/tasks/';
+        $dir = dirname(__DIR__, 2) . '/uploads/tasks/';
         if (!is_dir($dir)) mkdir($dir, 0755, true);
         $filename = 'task_' . time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $_FILES['attachment']['name']);
         if (move_uploaded_file($_FILES['attachment']['tmp_name'], $dir . $filename)) {

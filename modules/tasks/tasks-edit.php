@@ -44,19 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['flash_error'] = 'File must be less than 10MB.';
             redirect(SITE_URL . '/modules/tasks/tasks-edit.php?id=' . $task_id);
         }
-        $dir = __DIR__ . '/uploads/tasks/';
+        $dir = dirname(__DIR__, 2) . '/uploads/tasks/';
         if (!is_dir($dir)) mkdir($dir, 0755, true);
         $filename = 'task_' . $task_id . '_' . time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $_FILES['attachment']['name']);
         if (move_uploaded_file($_FILES['attachment']['tmp_name'], $dir . $filename)) {
-            // Delete old file if exists
-            if ($file_path && file_exists(__DIR__ . '/' . $file_path)) {
-                unlink(__DIR__ . '/' . $file_path);
+            if ($file_path && file_exists(dirname(__DIR__, 2) . '/' . $file_path)) {
+                unlink(dirname(__DIR__, 2) . '/' . $file_path);
             }
             $file_path = 'uploads/tasks/' . $filename;
         }
     } elseif (!empty($_POST['remove_file'])) {
-        if ($file_path && file_exists(__DIR__ . '/' . $file_path)) {
-            unlink(__DIR__ . '/' . $file_path);
+        if ($file_path && file_exists(dirname(__DIR__, 2) . '/' . $file_path)) {
+            unlink(dirname(__DIR__, 2) . '/' . $file_path);
         }
         $file_path = '';
     }
