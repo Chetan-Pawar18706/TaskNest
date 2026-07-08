@@ -390,16 +390,5 @@ MIT License
 
 **Email** - chetanpawar8125@email.com
 
-**Project Link** - [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)
-<<<<<<< HEAD
-#   T a s k N e s t  
- #   T a s k N e s t  
- #   T a s k N e s t  
- #   T a s k N e s t  
- #   T a s k N e s t  
- 
-=======
-#
->>>>>>> 441bab303e25e1fb45620d60dfa5d630c29976cd
-#   T a s k N e s t  
+**Project Link** - [https://github.com/Chetan-Pawar18706/TaskNest](https://github.com/Chetan-Pawar18706/TaskNest)#   T a s k N e s t  
  

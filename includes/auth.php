@@ -23,8 +23,9 @@ class Auth {
             ini_set('session.use_strict_mode', 1);
             ini_set('session.use_only_cookies', 1);
             ini_set('session.cookie_httponly', 1);
-            ini_set('session.cookie_secure', !DEBUG); // Only HTTPS in production
+            ini_set('session.cookie_secure', !DEBUG);
             ini_set('session.cookie_samesite', 'Lax');
+            ini_set('session.cookie_path', '/');
             ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
             
             session_start();
@@ -329,17 +330,31 @@ class Auth {
         if (!isset($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
+        // Cookie fallback for shared hosting (InfinityFree etc.)
+        setcookie('csrf_token', $_SESSION['csrf_token'], [
+            'expires'  => time() + 1800,
+            'path'     => '/',
+            'httponly'  => true,
+            'samesite' => 'Lax'
+        ]);
         return $_SESSION['csrf_token'];
     }
     
     /**
-     * Verify CSRF token
+     * Verify CSRF token — session first, cookie fallback
      */
     public function verifyCsrfToken($token) {
-        if (!isset($_SESSION['csrf_token']) || $token !== $_SESSION['csrf_token']) {
-            return false;
+        // Check session first
+        if (isset($_SESSION['csrf_token']) && $token === $_SESSION['csrf_token']) {
+            return true;
         }
-        return true;
+        // Fallback: check cookie
+        if (isset($_COOKIE['csrf_token']) && $token === $_COOKIE['csrf_token']) {
+            // Restore to session
+            $_SESSION['csrf_token'] = $token;
+            return true;
+        }
+        return false;
     }
     
     /**

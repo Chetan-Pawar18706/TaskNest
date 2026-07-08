@@ -30,16 +30,17 @@ define('ALLOWED_UPLOAD_TYPES', ['jpg', 'jpeg', 'png', 'gif']);
 define('AVATAR_UPLOAD_DIR', UPLOAD_DIR . 'avatars/');
 define('AVATAR_UPLOAD_URL', UPLOAD_URL . 'avatars/');
 
-// Email Configuration (PHPMailer)
-define('MAIL_HOST', 'smtp.mailtrap.io');
-define('MAIL_PORT', 2525);
-define('MAIL_USERNAME', 'your-username');
-define('MAIL_PASSWORD', 'your-password');
-define('MAIL_FROM_EMAIL', 'noreply@tasknest.local');
+// Email Configuration
+// InfinityFree SMTP — https://infinityfree.com/support/smtp
+define('SMTP_HOST', 'mail.yourdomain.com');  // apna domain daalo (e.g., tasknest.epizy.com)
+define('SMTP_PORT', 465);                      // 465 = SSL, 587 = TLS
+define('SMTP_USER', 'your-email@yourdomain.com');  // apni email
+define('SMTP_PASS', 'your-password');                // email ka password
+define('MAIL_FROM_EMAIL', 'your-email@yourdomain.com');
 define('MAIL_FROM_NAME', 'TaskNest');
 
 // Debug Mode
-define('DEBUG', false);
+define('DEBUG', true);  // <-- InfinityFree pe true rakho taaki error dikhe
 define('LOG_ERRORS', true);
 
 // Error Reporting

@@ -10,6 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $user_id = $auth->getUserId();
 
+    $writeActions = ['save_task','delete_task','restore_task','permanent_delete_task',
+                     'duplicate_task','update_status','bulk_action',
+                     'save_category','delete_category'];
+    if (in_array($action, $writeActions)) {
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (!$auth->verifyCsrfToken($csrf)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid CSRF token.']);
+            exit;
+        }
+    }
+
     switch ($action) {
         case 'save_task':
             echo json_encode(saveTaskHandler($mysqli, $user_id, $_POST));

@@ -58,7 +58,11 @@
         if (!canvas) return;
 
         if (months) {
-            fetch(siteUrl + '/modules/expenses/expenses.php?action=chart_data&months=' + months)
+            var formData = new FormData();
+            formData.append('action', 'chart_data');
+            formData.append('months', months);
+            formData.append('csrf_token', typeof csrfToken !== 'undefined' ? csrfToken : '');
+            fetch(siteUrl + '/modules/expenses/expenses.php', { method: 'POST', body: formData })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.success) {

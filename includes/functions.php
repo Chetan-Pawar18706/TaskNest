@@ -36,6 +36,41 @@ function safePrepare($mysqli, $sql) {
     return $stmt;
 }
 
+function ensureRateLimitTable($mysqli) {
+    if (tableExists($mysqli, 'rate_limits')) return;
+    $mysqli->query("CREATE TABLE IF NOT EXISTS rate_limits (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        identifier VARCHAR(255) NOT NULL,
+        action VARCHAR(50) NOT NULL,
+        attempts INT DEFAULT 1,
+        first_attempt_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_attempt_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_rate_lookup (identifier, action, first_attempt_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+function checkRateLimit($mysqli, $identifier, $action, $maxAttempts, $windowSeconds) {
+    ensureRateLimitTable($mysqli);
+    $stmt = safePrepare($mysqli, "SELECT id, attempts, first_attempt_at FROM rate_limits WHERE identifier = ? AND action = ? AND first_attempt_at > DATE_SUB(NOW(), INTERVAL ? SECOND)");
+    $stmt->bind_param('ssi', $identifier, $action, $windowSeconds);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+
+    if ($row) {
+        if ((int)$row['attempts'] >= $maxAttempts) {
+            return false;
+        }
+        $stmt = safePrepare($mysqli, "UPDATE rate_limits SET attempts = attempts + 1, last_attempt_at = NOW() WHERE id = ?");
+        $stmt->bind_param('i', $row['id']);
+        $stmt->execute();
+    } else {
+        $stmt = safePrepare($mysqli, "INSERT INTO rate_limits (identifier, action, attempts) VALUES (?, ?, 1)");
+        $stmt->bind_param('ss', $identifier, $action);
+        $stmt->execute();
+    }
+    return true;
+}
+
 function logActivity($user_id, $action, $entity_type, $entity_id, $description) {
     global $mysqli;
     if (!$mysqli) return;

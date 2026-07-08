@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $row = $stmt->get_result()->fetch_assoc();
             if ($row && password_verify($password, $row['password_hash'])) {
-                $_SESSION['vault_password'] = $password;
+                $_SESSION['vault_key'] = deriveEncryptionKey($password, 'tasknest-' . $user_id . '-vault');
                 $_SESSION['vault_unlocked'] = true;
                 $_SESSION['vault_unlock_time'] = time();
                 echo json_encode(['success' => true, 'message' => 'Vault unlocked.']);
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
         case 'lock_vault':
-            unset($_SESSION['vault_password']);
+            unset($_SESSION['vault_key']);
             unset($_SESSION['vault_unlocked']);
             unset($_SESSION['vault_unlock_time']);
             echo json_encode(['success' => true, 'message' => 'Vault locked.']);
@@ -57,13 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Actions that need vault unlocked
         default:
             $vault_unlocked = !empty($_SESSION['vault_unlocked']) && !empty($_SESSION['vault_unlock_time']) && (time() - $_SESSION['vault_unlock_time'] < 1800);
-            $vaultPassword = $_SESSION['vault_password'] ?? null;
-            if (!$vault_unlocked || $vaultPassword === null) {
-                unset($_SESSION['vault_unlocked'], $_SESSION['vault_unlock_time'], $_SESSION['vault_password']);
+            $encryptionKey = $_SESSION['vault_key'] ?? null;
+            if (!$vault_unlocked || $encryptionKey === null) {
+                unset($_SESSION['vault_unlocked'], $_SESSION['vault_unlock_time'], $_SESSION['vault_key']);
                 echo json_encode(['success' => false, 'message' => 'Vault is locked. Please unlock first.']);
                 exit;
             }
-            $encryptionKey = deriveEncryptionKey($vaultPassword, 'tasknest-' . $user_id . '-vault');
 
             switch ($action) {
                 case 'save_password':

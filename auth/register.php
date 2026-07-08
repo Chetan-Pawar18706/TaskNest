@@ -17,6 +17,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Security token invalid. Please try again.';
     }
     
+    // Rate limit: 3 registrations per IP per hour
+    if (empty($errors)) {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if (!checkRateLimit($mysqli, $ip, 'register', 3, 3600)) {
+            $errors[] = 'Too many registration attempts. Please try again later.';
+        }
+    }
+    
     if (empty($errors)) {
         $username = sanitize($_POST['username'] ?? '');
         $email = sanitize($_POST['email'] ?? '');

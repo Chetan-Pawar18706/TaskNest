@@ -18,6 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Security token invalid. Please try again.';
     }
     
+    // Rate limit: 3 reset requests per email per hour
+    if (empty($errors)) {
+        $email = sanitize($_POST['email'] ?? '');
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if (!checkRateLimit($mysqli, $email, 'forgot_password', 3, 3600) && !checkRateLimit($mysqli, $ip, 'forgot_password_ip', 10, 3600)) {
+            // Always show success for security (don't reveal if email exists)
+            $message = 'If an account exists for this email, a password reset link has been sent.';
+            goto skip_reset;
+        }
+    }
+    
     if (empty($errors)) {
         $email = sanitize($_POST['email'] ?? '');
         
@@ -29,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'If an account exists for this email, a password reset link has been sent.';
         }
     }
+    skip_reset:
 }
 
 $page_title = 'Forgot Password';
@@ -66,10 +78,13 @@ $page_title = 'Forgot Password';
 
                 <?php if (!empty($_SESSION['debug_emails'])): ?>
                 <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin-bottom:20px;">
-                    <p style="font-weight:600;color:#92400e;margin:0 0 8px;">Email could not be sent (local server). Use this link instead:</p>
+                    <p style="font-weight:600;color:#92400e;margin:0 0 8px;">Email could not be sent. Use this link instead:</p>
                     <?php foreach (array_reverse($_SESSION['debug_emails']) as $email): ?>
                     <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:8px;">
                         <p style="margin:0 0 4px;font-size:13px;color:#6b7280;"><strong>To:</strong> <?php echo htmlspecialchars($email['to']); ?></p>
+                        <?php if (!empty($email['error'])): ?>
+                        <p style="margin:0 0 4px;font-size:12px;color:#dc2626;"><strong>Error:</strong> <?php echo htmlspecialchars($email['error']); ?></p>
+                        <?php endif; ?>
                         <p style="margin:0 0 8px;font-size:13px;"><strong>Reset Link:</strong></p>
                         <?php if (!empty($email['reset_link'])): ?>
                         <a href="<?php echo htmlspecialchars($email['reset_link']); ?>" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;margin-bottom:8px;">Click to Reset Password</a>
