@@ -1,124 +1,52 @@
 <?php
 /**
  * TaskNest - Email Helper
- * Custom SMTP class — works on InfinityFree (no PHPMailer, no vendor needed)
+ * PHPMailer based — Gmail SMTP
  */
 
-class TaskNestMailer {
-    private $host, $port, $username, $password, $from_email, $from_name;
-    private $errno = 0, $errstr = '';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/functions.php';
 
-    public function __construct($host, $port, $username, $password, $from_email, $from_name) {
-        $this->host = $host;
-        $this->port = (int)$port;
-        $this->username = $username;
-        $this->password = $password;
-        $this->from_email = $from_email;
-        $this->from_name = $from_name;
-    }
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-    public function send($to, $subject, $html, $plain = '') {
-        if (empty($plain)) $plain = strip_tags($html);
-
-        $fp = @fsockopen($this->host, $this->port, $this->errno, $this->errstr, 10);
-        if (!$fp) {
-            return ['success' => false, 'message' => "SMTP connection failed: {$this->errstr}"];
-        }
-
-        $response = $this->readResponse($fp);
-        $this->sendCommand($fp, "EHLO tasknest");
-        $this->readResponse($fp);
-
-        // Try STARTTLS
-        $this->sendCommand($fp, "STARTTLS");
-        $tlsResponse = $this->readResponse($fp);
-        if (strpos($tlsResponse, '220') === 0) {
-            stream_context_set_option($fp, 'ssl', 'verify_peer', false);
-            stream_context_set_option($fp, 'ssl', 'verify_peer_name', false);
-            $crypto = stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT);
-            if (!$crypto) {
-                fclose($fp);
-                return ['success' => false, 'message' => 'STARTTLS failed'];
-            }
-            $this->sendCommand($fp, "EHLO tasknest");
-            $this->readResponse($fp);
-        }
-
-        // Auth
-        $this->sendCommand($fp, "AUTH LOGIN");
-        $this->readResponse($fp);
-        $this->sendCommand($fp, base64_encode($this->username));
-        $this->readResponse($fp);
-        $this->sendCommand($fp, base64_encode($this->password));
-        $authResponse = $this->readResponse($fp);
-        if (strpos($authResponse, '235') !== 0) {
-            fclose($fp);
-            return ['success' => false, 'message' => 'SMTP auth failed: ' . trim($authResponse)];
-        }
-
-        // Send email
-        $this->sendCommand($fp, "MAIL FROM:<{$this->from_email}>");
-        $this->readResponse($fp);
-        $this->sendCommand($fp, "RCPT TO:<{$to}>");
-        $this->readResponse($fp);
-        $this->sendCommand($fp, "DATA");
-        $this->readResponse($fp);
-
-        $headers  = "From: =?UTF-8?B?" . base64_encode($this->from_name) . "?= <{$this->from_email}>\r\n";
-        $headers .= "To: <{$to}>\r\n";
-        $headers .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
-        $headers .= "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= "Date: " . date('r') . "\r\n";
-        $headers .= "\r\n";
-
-        $body = $headers . $html . "\r\n.\r\n";
-        $this->sendCommand($fp, $body);
-        $dataResponse = $this->readResponse($fp);
-
-        $this->sendCommand($fp, "QUIT");
-        fclose($fp);
-
-        if (strpos($dataResponse, '250') === 0) {
-            return ['success' => true, 'message' => 'Email sent'];
-        }
-        return ['success' => false, 'message' => 'DATA failed: ' . trim($dataResponse)];
-    }
-
-    private function sendCommand($fp, $cmd) {
-        fwrite($fp, $cmd . "\r\n");
-    }
-
-    private function readResponse($fp) {
-        $response = '';
-        while (true) {
-            $line = fgets($fp, 512);
-            if ($line === false) break;
-            $response .= $line;
-            if (isset($line[3]) && $line[3] === ' ') break;
-        }
-        return $response;
-    }
-}
-
-/**
- * Send email — SMTP try, fail ho to mail(), dono fail ho to debug.
- */
 function sendEmail($to, $subject, $html, $plain = '') {
     if (empty($plain)) $plain = strip_tags($html);
 
-    // Try SMTP
     if (defined('SMTP_HOST') && SMTP_HOST) {
-        $mailer = new TaskNestMailer(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM_EMAIL, MAIL_FROM_NAME);
-        $result = $mailer->send($to, $subject, $html, $plain);
-        if ($result['success']) {
-            logMessage("[SMTP] Email sent to $to: $subject", 'EMAIL');
-            return $result;
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host       = SMTP_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = SMTP_USER;
+            $mail->Password   = SMTP_PASS;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = SMTP_PORT;
+            $mail->CharSet    = 'UTF-8';
+            $mail->Encoding   = 'base64';
+
+            $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
+            $mail->addAddress($to);
+            $mail->addReplyTo(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
+
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $html;
+            $mail->AltBody = $plain;
+
+            if (!$mail->send()) {
+                logMessage("[PHPMailer] Failed to $to: {$mail->ErrorInfo}", 'EMAIL_ERROR');
+                return ['success' => false, 'message' => $mail->ErrorInfo];
+            }
+            logMessage("[PHPMailer] Email sent to $to: $subject", 'EMAIL');
+            return ['success' => true, 'message' => 'Email sent'];
+        } catch (Exception $e) {
+            logMessage("[PHPMailer] Failed to $to: {$mail->ErrorInfo}", 'EMAIL_ERROR');
+            return ['success' => false, 'message' => $mail->ErrorInfo];
         }
-        logMessage("[SMTP] Failed to $to: {$result['message']}", 'EMAIL_ERROR');
     }
 
-    // Fallback: PHP mail()
     $headers  = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8\r\n";
     $headers .= "From: " . MAIL_FROM_NAME . " <" . MAIL_FROM_EMAIL . ">\r\n";
@@ -128,7 +56,6 @@ function sendEmail($to, $subject, $html, $plain = '') {
         return ['success' => true, 'message' => 'Email sent'];
     }
 
-    // Both failed — store for debug
     $error = error_get_last();
     $errorMsg = $error['message'] ?? 'All methods failed';
     logMessage("[ALL FAILED] $to: $subject | $errorMsg", 'EMAIL_ERROR');

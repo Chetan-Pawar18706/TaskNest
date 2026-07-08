@@ -30,13 +30,12 @@ define('ALLOWED_UPLOAD_TYPES', ['jpg', 'jpeg', 'png', 'gif']);
 define('AVATAR_UPLOAD_DIR', UPLOAD_DIR . 'avatars/');
 define('AVATAR_UPLOAD_URL', UPLOAD_URL . 'avatars/');
 
-// Email Configuration
-// InfinityFree SMTP — https://infinityfree.com/support/smtp
-define('SMTP_HOST', 'mail.yourdomain.com');  // apna domain daalo (e.g., tasknest.epizy.com)
-define('SMTP_PORT', 465);                      // 465 = SSL, 587 = TLS
-define('SMTP_USER', 'your-email@yourdomain.com');  // apni email
-define('SMTP_PASS', 'your-password');                // email ka password
-define('MAIL_FROM_EMAIL', 'your-email@yourdomain.com');
+// Email Configuration — Gmail SMTP (Free, 500 emails/day)
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_USER', 'chetanpawar1876@gmail.com');
+define('SMTP_PASS', 'raoq nhry vkez uyvi');
+define('MAIL_FROM_EMAIL', 'chetanpawar1876@gmail.com');
 define('MAIL_FROM_NAME', 'TaskNest');
 
 // Debug Mode
