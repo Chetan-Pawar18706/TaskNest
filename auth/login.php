@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $email = sanitize($_POST['email'] ?? '');
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        if (!checkRateLimit($mysqli, $email, 'login', 5, 900) && !checkRateLimit($mysqli, $ip, 'login_ip', 20, 900)) {
+        if (!checkRateLimit($mysqli, $email, 'login', 5, 900) || !checkRateLimit($mysqli, $ip, 'login_ip', 20, 900)) {
             $errors[] = 'Too many login attempts. Please try again in 15 minutes.';
         }
     }

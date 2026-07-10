@@ -22,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $email = sanitize($_POST['email'] ?? '');
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        if (!checkRateLimit($mysqli, $email, 'forgot_password', 3, 3600) && !checkRateLimit($mysqli, $ip, 'forgot_password_ip', 10, 3600)) {
+        if (!checkRateLimit($mysqli, $email, 'forgot_password', 3, 3600) || !checkRateLimit($mysqli, $ip, 'forgot_password_ip', 10, 3600)) {
+            sendRateLimitNotificationEmail($email);
             // Always show success for security (don't reveal if email exists)
             $message = 'If an account exists for this email, a password reset link has been sent.';
             goto skip_reset;

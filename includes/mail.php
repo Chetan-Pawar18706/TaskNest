@@ -10,7 +10,7 @@ require_once __DIR__ . '/functions.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-function sendEmail($to, $subject, $html, $plain = '') {
+function sendEmail($to, $subject, $html, $plain = '', $embeddedImages = []) {
     if (empty($plain)) $plain = strip_tags($html);
 
     if (defined('SMTP_HOST') && SMTP_HOST) {
@@ -29,6 +29,13 @@ function sendEmail($to, $subject, $html, $plain = '') {
             $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
             $mail->addAddress($to);
             $mail->addReplyTo(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
+
+            foreach ($embeddedImages as $img) {
+                if (!empty($img['path']) && !empty($img['cid']) && file_exists($img['path'])) {
+                    $mime = $img['mime'] ?? 'application/octet-stream';
+                    $mail->addEmbeddedImage($img['path'], $img['cid'], basename($img['path']), 'base64', $mime);
+                }
+            }
 
             $mail->isHTML(true);
             $mail->Subject = $subject;
@@ -71,14 +78,75 @@ function storeDebugEmail($to, $subject, $html, $plain, $error = '') {
     ];
 }
 
+function getEmailLogoCid() {
+    return 'tasknest_logo';
+}
+
+function getEmailLogoPath() {
+    $pngPath = __DIR__ . '/../assets/images/logo.png';
+    $cacheDir = __DIR__ . '/../cache/email/';
+    $jpegPath = $cacheDir . 'logo_email.jpg';
+
+    if (file_exists($jpegPath) && (time() - filemtime($jpegPath)) < 86400) {
+        return $jpegPath;
+    }
+
+    if (!is_dir($cacheDir)) {
+        mkdir($cacheDir, 0755, true);
+    }
+
+    if (function_exists('imagecreatefrompng') && file_exists($pngPath)) {
+        $src = imagecreatefrompng($pngPath);
+        $origW = imagesx($src);
+        $origH = imagesy($src);
+        $maxW = 200;
+        $ratio = $maxW / $origW;
+        $newW = $maxW;
+        $newH = (int)($origH * $ratio);
+        $dst = imagecreatetruecolor($newW, $newH);
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+        imagejpeg($dst, $jpegPath, 85);
+        imagedestroy($src);
+        imagedestroy($dst);
+        return $jpegPath;
+    }
+
+    return $pngPath;
+}
+
+function buildLogoTag($cid) {
+    $path = getEmailLogoPath();
+    if (file_exists($path)) {
+        return '<img src="cid:' . $cid . '" alt="' . SITE_NAME . '" style="height:60px;margin-bottom:12px;" />';
+    }
+    return '';
+}
+
+function buildLogoEmbeddedImage() {
+    $path = getEmailLogoPath();
+    $cid = getEmailLogoCid();
+    if (file_exists($path)) {
+        $mime = 'image/jpeg';
+        if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'png') {
+            $mime = 'image/png';
+        }
+        return [['path' => $path, 'cid' => $cid, 'mime' => $mime]];
+    }
+    return [];
+}
+
 function sendPasswordResetEmail($to, $resetLink) {
     $subject = SITE_NAME . " - Password Reset Request";
+    $logoImg = buildLogoTag(getEmailLogoCid());
     $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f6f9;font-family:system-ui,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 20px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
   <tr><td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px;text-align:center;">
+    ' . $logoImg . '
     <h1 style="color:#fff;margin:0;">' . SITE_NAME . '</h1></td></tr>
   <tr><td style="padding:40px 32px;">
     <h2 style="color:#1f2937;margin:0 0 16px;">Password Reset Request</h2>
@@ -92,10 +160,38 @@ function sendPasswordResetEmail($to, $resetLink) {
 </table></td></tr></table></body></html>';
     $plain = "Password Reset: $resetLink";
 
-    $result = sendEmail($to, $subject, $html, $plain);
+    $result = sendEmail($to, $subject, $html, $plain, buildLogoEmbeddedImage());
     if (isset($_SESSION['debug_emails'])) {
         $last = count($_SESSION['debug_emails']) - 1;
         if ($last >= 0) $_SESSION['debug_emails'][$last]['reset_link'] = $resetLink;
     }
     return $result;
+}
+
+function sendRateLimitNotificationEmail($to) {
+    $subject = SITE_NAME . " - Too Many Password Reset Requests";
+    $logoImg = buildLogoTag(getEmailLogoCid());
+    $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:system-ui,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+  <tr><td style="background:linear-gradient(135deg,#ef4444,#f97316);padding:32px;text-align:center;">
+    ' . $logoImg . '
+    <h1 style="color:#fff;margin:0;">' . SITE_NAME . '</h1></td></tr>
+  <tr><td style="padding:40px 32px;">
+    <h2 style="color:#1f2937;margin:0 0 16px;">Too Many Reset Requests</h2>
+    <p style="color:#4b5563;line-height:1.6;">We noticed multiple password reset requests for <strong>' . htmlspecialchars($to) . '</strong>.</p>
+    <p style="color:#4b5563;line-height:1.6;">For your security, the reset link limit has been reached. Please wait <strong>1 hour</strong> before trying again.</p>
+    <p style="color:#4b5563;line-height:1.6;">If you didn\'t request this, your account is safe. No changes have been made.</p>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:20px 0;">
+      <p style="color:#991b1b;margin:0;font-size:14px;"><strong>Didn\'t request this?</strong> Secure your account by changing your password once the limit expires.</p>
+    </div>
+  </td></tr>
+  <tr><td style="background:#f9fafb;padding:24px 32px;text-align:center;border-top:1px solid #e5e7eb;">
+    <p style="color:#9ca3af;margin:0;font-size:12px;">This is a security notification from ' . SITE_NAME . '.</p></td></tr>
+</table></td></tr></table></body></html>';
+    $plain = "Too many password reset requests for $to. Please wait 1 hour before trying again.";
+
+    return sendEmail($to, $subject, $html, $plain, buildLogoEmbeddedImage());
 }
