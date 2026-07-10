@@ -463,8 +463,8 @@ function getUpcomingReminders($mysqli, $user_id, $days = 7) {
         }
     }
 
-    if (tableExists($mysqli, 'borrow')) {
-        $stmt = safePrepare($mysqli, "SELECT title, return_date AS due_date, 'Borrow' AS label FROM borrow WHERE user_id = ? AND return_date IS NOT NULL AND return_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY) ORDER BY return_date ASC LIMIT 5");
+    if (tableExists($mysqli, 'borrow_items')) {
+        $stmt = safePrepare($mysqli, "SELECT title, return_date AS due_date, 'Borrow' AS label FROM borrow_items WHERE user_id = ? AND return_date IS NOT NULL AND return_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY) ORDER BY return_date ASC LIMIT 5");
         if ($stmt) {
             $stmt->bind_param('ii', $user_id, $days);
             $stmt->execute();
@@ -4189,10 +4189,8 @@ function getReminders($mysqli, $user_id, $filters = []) {
         $types .= 'ss';
     }
 
-    $orderBy = $filters['order'] ?? 'ASC';
     $limit = $filters['limit'] ?? 50;
 
-    $sql = "SELECT r.* FROM reminders r WHERE $orderBy ORDER BY r.reminder_date $orderBy, r.reminder_time $orderBy LIMIT ?";
     $sql = "SELECT r.* FROM reminders r WHERE $where ORDER BY r.reminder_date ASC, r.reminder_time ASC LIMIT ?";
     $params[] = $limit;
     $types .= 'i';
