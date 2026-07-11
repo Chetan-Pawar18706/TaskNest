@@ -22,8 +22,10 @@ logs/
 *.log
 
 # Uploads (user data)
-uploads/avatars/*
-!uploads/avatars/.gitkeep
+uploads/documents/*
+!uploads/documents/.gitkeep
+uploads/profile/*
+!uploads/profile/.gitkeep
 
 # Cache
 cache/
@@ -38,8 +40,7 @@ temp/
 *.sql
 !database/tasknest.sql
 
-# Dependencies (if using Composer later)
-vendor/
+# Dependencies
 composer.lock
 
 # Testing

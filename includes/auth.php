@@ -20,15 +20,29 @@ class Auth {
      */
     private function initSession() {
         if (session_status() === PHP_SESSION_NONE) {
-            ini_set('session.use_strict_mode', 1);
+            ini_set('session.use_strict_mode', 0);
             ini_set('session.use_only_cookies', 1);
             ini_set('session.cookie_httponly', 1);
-            ini_set('session.cookie_secure', !DEBUG);
+            ini_set('session.cookie_secure', 0);
             ini_set('session.cookie_samesite', 'Lax');
             ini_set('session.cookie_path', '/');
             ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
             
             session_start();
+        }
+        
+        // CSRF token — generate BEFORE any HTML output so setcookie() works
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        // Cookie fallback — critical for InfinityFree / shared hosting where sessions fail
+        if (empty($_COOKIE['csrf_token']) || $_COOKIE['csrf_token'] !== $_SESSION['csrf_token']) {
+            setcookie('csrf_token', $_SESSION['csrf_token'], [
+                'expires'  => time() + 1800,
+                'path'     => '/',
+                'httponly'  => false,
+                'samesite' => 'Lax'
+            ]);
         }
         
         // Check if user is logged in
@@ -99,7 +113,7 @@ class Auth {
         }
         
         // Insert user
-        $password_hash = password_hash($password, PASSWORD_ARGON2ID, ['memory_cost' => 65536, 'time_cost' => 4, 'threads' => 3]);
+        $password_hash = password_hash($password, PASSWORD_BCRYPT);
         
         $stmt = $this->mysqli->prepare("INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("sssss", $username, $email, $password_hash, $first_name, $last_name);
@@ -171,6 +185,12 @@ class Auth {
         
         // Generate CSRF token
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        setcookie('csrf_token', $_SESSION['csrf_token'], [
+            'expires'  => time() + 1800,
+            'path'     => '/',
+            'httponly'  => false,
+            'samesite' => 'Lax'
+        ]);
         
         // Remember me functionality
         if ($remember_me) {
@@ -304,7 +324,7 @@ class Auth {
         $user_id = $reset_record['user_id'];
         
         // Update password
-        $password_hash = password_hash($new_password, PASSWORD_ARGON2ID, ['memory_cost' => 65536, 'time_cost' => 4, 'threads' => 3]);
+        $password_hash = password_hash($new_password, PASSWORD_BCRYPT);
         
         $stmt_update = $this->mysqli->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
         $stmt_update->bind_param("si", $password_hash, $user_id);
@@ -327,16 +347,10 @@ class Auth {
      * Generate CSRF token
      */
     public function generateCsrfToken() {
+        // Token is already generated in initSession() before any HTML output
         if (!isset($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
-        // Cookie fallback for shared hosting (InfinityFree etc.)
-        setcookie('csrf_token', $_SESSION['csrf_token'], [
-            'expires'  => time() + 1800,
-            'path'     => '/',
-            'httponly'  => true,
-            'samesite' => 'Lax'
-        ]);
         return $_SESSION['csrf_token'];
     }
     
@@ -593,6 +607,12 @@ class Auth {
             $_SESSION['user_id'] = $userId;
             $_SESSION['login_time'] = time();
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            setcookie('csrf_token', $_SESSION['csrf_token'], [
+                'expires'  => time() + 1800,
+                'path'     => '/',
+                'httponly'  => false,
+                'samesite' => 'Lax'
+            ]);
             $this->user_id = $userId;
             $this->loadUser();
             return true;

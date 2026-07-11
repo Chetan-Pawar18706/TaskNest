@@ -22,17 +22,8 @@ Options -Indexes
     Header set X-Frame-Options "SAMEORIGIN"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
     Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.qrserver.com; font-src 'self';"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
 </IfModule>
 
 # Disable server signature
 ServerSignature Off
-
-# PHP security settings
-<IfModule mod_php.c>
-    php_flag display_errors off
-    php_flag expose_php off
-    php_value upload_max_filesize 10M
-    php_value post_max_size 12M
-    php_value max_execution_time 30
-</IfModule>

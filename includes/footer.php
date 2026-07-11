@@ -13,9 +13,9 @@
     
     <!-- CSRF Token & Config -->
     <script>
-        const csrfToken = '<?php echo $auth->generateCsrfToken(); ?>';
-        const siteUrl = '<?php echo SITE_URL; ?>';
-        const debugMode = <?php echo DEBUG ? 'true' : 'false'; ?>;
+        var csrfToken = '<?php echo $auth->generateCsrfToken(); ?>';
+        var siteUrl = '<?php echo SITE_URL; ?>';
+        var debugMode = <?php echo DEBUG ? 'true' : 'false'; ?>;
     </script>
 
     <!-- Global Confirm Modal -->

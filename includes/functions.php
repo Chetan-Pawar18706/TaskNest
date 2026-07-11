@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * TaskNest - Utility Functions
  */

@@ -109,6 +109,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Reload auth to get updated data
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                setcookie('csrf_token', $_SESSION['csrf_token'], [
+                    'expires'  => time() + 1800,
+                    'path'     => '/',
+                    'httponly'  => false,
+                    'samesite' => 'Lax'
+                ]);
                 
                 // Apply theme immediately via JS
                 echo '<script>localStorage.setItem("tasknest-theme", "' . htmlspecialchars($theme) . '"); document.body.setAttribute("data-theme", "' . htmlspecialchars($theme) . '"); document.documentElement.classList.remove("light","dark"); document.documentElement.classList.add("' . htmlspecialchars($theme) . '");</script>';

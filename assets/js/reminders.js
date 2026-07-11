@@ -220,7 +220,8 @@ function loadBellCount() {
     formData.append('action', 'get_bell');
     formData.append('csrf_token', typeof csrfToken !== 'undefined' ? csrfToken : '');
 
-    fetch(siteUrl + '/modules/reminders/reminders.php', { method: 'POST', body: formData })
+    var url = (typeof siteUrl !== 'undefined' ? siteUrl : window.location.origin) + '/modules/reminders/reminders.php';
+    fetch(url, { method: 'POST', body: formData })
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (!data.success) return;

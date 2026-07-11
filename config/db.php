@@ -11,8 +11,24 @@ define('DB_PASS', '');
 define('DB_NAME', 'tasknest');
 define('DB_PORT', 3306);
 
+// Project Root — works on localhost, hosting, subdirectory, anywhere
+define('PROJECT_ROOT', dirname(__DIR__));
+
 // Site Configuration
-define('SITE_URL', 'http://localhost/TaskNest');
+// Hosting pe:  define('SITE_URL', 'https://tasknest.is-best.net');
+// Localhost pe: define('SITE_URL', 'http://localhost/TaskNest');
+
+if (!defined('SITE_URL')) {
+    $is_secure = (
+        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+        (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+        (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on')
+    );
+    $protocol = $is_secure ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
+    define('SITE_URL', $protocol . '://' . $host . $path);
+}
 define('SITE_NAME', 'TaskNest');
 define('SITE_DESCRIPTION', 'All-in-one Personal Life Management System');
 
@@ -38,8 +54,8 @@ define('SMTP_PASS', 'raoq nhry vkez uyvi');
 define('MAIL_FROM_EMAIL', 'chetanpawar1876@gmail.com');
 define('MAIL_FROM_NAME', 'TaskNest');
 
-// Debug Mode
-define('DEBUG', true);  // <-- InfinityFree pe true rakho taaki error dikhe
+// Debug Mode — production pe false rakho
+define('DEBUG', false);
 define('LOG_ERRORS', true);
 
 // Error Reporting
